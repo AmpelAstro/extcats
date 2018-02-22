@@ -1,0 +1,7 @@
+# build stuff
+/build/
+/dist/
+/extcats.egg-info/
+
+# exclude test data
+/testdata/
