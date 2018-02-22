@@ -3,5 +3,9 @@
 /dist/
 /extcats.egg-info/
 
-# exclude test data
+# test data
 /testdata/
+
+# notebooks rubbish
+extcats/.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
