@@ -7,5 +7,5 @@
 /testdata/
 
 # notebooks rubbish
-extcats/.ipynb_checkpoints/
-notebooks/.ipynb_checkpoints/
+/extcats/.ipynb_checkpoints/
+/notebooks/.ipynb_checkpoints/
