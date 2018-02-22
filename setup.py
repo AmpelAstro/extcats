@@ -21,11 +21,10 @@ setup(
 )
 
 
-# ------- download test data ------- #
-print (42*"=")
-print ("         DOWNLOADING TEST DATA")
-print (42*"=")
+# fuffa
 
+
+# ------- download test data ------- #
 # the million quasar catalog
 mqc_testdata_dir = "./testdata/milliquas"
 if not os.path.isdir(mqc_testdata_dir):
