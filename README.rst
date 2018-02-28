@@ -8,7 +8,7 @@ matches.
 
 The preferred way to install the package is to download the tar 
 from this Github page, unpack it in your favourite place, and 
-run python setup.py --install. This will also download some test
+run python setup.py install. This will also download some test
 data to run the example notebooks. 
 
 Alternatively, the pure python pacakge (witout examples) should be 
