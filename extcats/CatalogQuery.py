@@ -19,8 +19,6 @@
 import pymongo
 from astropy.table import Table
 from healpy import nside2resol
-
-from extcats import CatalogManager as CM
 from extcats.catquery_utils import searcharound_HEALPix, searcharound_9HEALPix, \
                             searcharound_2Dsphere, searcharound_RAW, get_closest
 
@@ -31,7 +29,7 @@ class CatalogQuery():
     """
     
     def __init__(self, cat_name, ra_key, dec_key, coll_name = "srcs", 
-        dbclient = None, use_hidden = False, logger =  None, **catalog_manager_args):
+        dbclient = None, logger =  None):
         """
             Connect to the desired database and collection. Retrive information
             on how to query it and what's the catalog is about.
@@ -52,20 +50,8 @@ class CatalogQuery():
                 dbclient: `pymongo.mongo_client.MongoClient`
                     mongodb client where. If None, it will use the default one.
                 
-                use_hidden: `bool`
-                    if False, the initialization will fail if the catalog has
-                    not been exposed. Use an istance of the CatalogManager class
-                    to check for exposed/hidden catalogs.
-                
                 logger: `self.logger.Logger`:
                     logger for the class. If None, a default one will be created.
-                
-                catalog_manager_args:
-                    valid arguments for the CatalogManager instance initialization.
-                    Defaults are:
-                    exposed_cats_dbclient =  None, 
-                    exposed_cats_db = "exposed_catalogs",
-                    exposed_cats_coll = "cats"
         """
         
         # init the logger
@@ -81,11 +67,6 @@ class CatalogQuery():
         if dbclient is None:
             self.dbclient = pymongo.MongoClient()
         self.logger.info("using mongo client at %s:%d"%(self.dbclient.address))
-        
-        # check if the database has been exposed for use in production
-        cm = CM.CatalogManager(**catalog_manager_args)
-        if (not cm.isexposed(cat_name)) and (not use_hidden):
-            raise RuntimeError("catalog %s is not exposed. Set use_hidden if you want to test it."%cat_name)
         
         # find database and collection
         if not cat_name in self.dbclient.database_names():
@@ -216,7 +197,7 @@ class CatalogQuery():
         self.logger.info("setting default search method to '%s'"%self.default_method)
 
 
-    def findwithin_HEALPix(self, ra, dec, rs_arcsec):
+    def findwithin_HEALPix(self, ra, dec, rs_arcsec, circular = True, find_one = False):
         """
             Returns sources in catalog contained in the the group of healpixels
             around the target coordinate that covers the search radius.
@@ -234,6 +215,15 @@ class CatalogQuery():
                 rs_arcsec: `float`
                     maximum allowed distance to target position (in arcsec).
                 
+                circular: `bool`, default: True
+                    if True, the results are skimmed removing sources outside of the
+                    circular search radius.
+                
+                find_one: `bool`
+                    if True the collection is searched with the find_one method returning
+                    just the first result of the query. if False (default), the method
+                    find is used, returning all matching documents.
+                
             Returns:
             --------
                 
@@ -248,10 +238,11 @@ class CatalogQuery():
         return searcharound_HEALPix(
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, src_coll = self.src_coll,
             hp_key = self.hp_key, hp_order = self.hp_order, 
-            hp_nest = self.hp_nest, hp_resol = self.hp_resol)
+            hp_nest = self.hp_nest, hp_resol = self.hp_resol, 
+            circular = circular, ra_key = self.ra_key, dec_key = self.dec_key, find_one = find_one)
 
 
-    def findwithin_9HEALPix(self, ra, dec):
+    def findwithin_9HEALPix(self, ra, dec, find_one = False):
         """
             Returns sources in catalog contained in the 9 healpixels
             around the target coordinate.
@@ -262,6 +253,11 @@ class CatalogQuery():
                 ra/dec: `float`
                     sky coordinates of the target direction. They have to be in
                     the same format as those used to find the healpix id.
+                
+                find_one: `bool`
+                    if True the collection is searched with the find_one method returning
+                    just the first result of the query. if False (default), the method
+                    find is used, returning all matching documents.
                 
             Returns:
             --------
@@ -277,10 +273,10 @@ class CatalogQuery():
         "queries sources in a 9-pixel square of %.3f arcsec side around target"%(3*self.hp_resol))
         return searcharound_9HEALPix(
             ra = ra, dec = dec, src_coll = self.src_coll, hp_key = self.hp_key, 
-            hp_order = self.hp_order, hp_nest = self.hp_nest, hp_resol = self.hp_resol)
+            hp_order = self.hp_order, hp_nest = self.hp_nest, hp_resol = self.hp_resol, find_one = find_one)
 
 
-    def findwithin_2Dsphere(self, ra, dec, rs_arcsec):
+    def findwithin_2Dsphere(self, ra, dec, rs_arcsec, find_one = False):
         """
             Returns sources in catalog within rs_arcsec from target position.
             
@@ -303,6 +299,11 @@ class CatalogQuery():
                 rs_arcsec: `float`
                     maximum allowed distance to target position (in arcsec).
                 
+                find_one: `bool`
+                    if True the collection is searched with the find_one method returning
+                    just the first result of the query. if False (default), the method
+                    find is used, returning all matching documents.
+                
             Returns:
             --------
                 
@@ -314,10 +315,10 @@ class CatalogQuery():
             raise RuntimeError("catalog has no geoJSON/legacy pair object. Cannot use it to query.")
         return searcharound_2Dsphere(
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, 
-            src_coll = self.src_coll, s2d_key = self.s2d_key)
+            src_coll = self.src_coll, s2d_key = self.s2d_key, find_one = find_one)
 
 
-    def findwithin_RAW(self, ra, dec, rs_arcsec, box_scale = 2.):
+    def findwithin_RAW(self, ra, dec, rs_arcsec, box_scale = 2., find_one = False):
         """
             Returns sources in catalog within rs_arcsec from target position.
             
@@ -340,6 +341,11 @@ class CatalogQuery():
                 box_scale: `float`
                     size of the square used to pre-search candidates, in units of rs_arcsec.
                 
+                find_one: `bool`
+                    if True the collection is searched with the find_one method returning
+                    just the first result of the query. if False (default), the method
+                    find is used, returning all matching documents.
+                
             Returns:
             --------
                 
@@ -348,8 +354,8 @@ class CatalogQuery():
                     no counpterpart is found returns None.
         """
         return searcharound_RAW(
-            ra = ra, dec = dec, rs_arcsec = rs_arcsec, 
-            src_coll = self.src_coll, ra_key = self.ra_key, dec_key = self.dec_key, box_scale = 2)
+            ra = ra, dec = dec, rs_arcsec = rs_arcsec, src_coll = self.src_coll,
+            ra_key = self.ra_key, dec_key = self.dec_key, box_scale = box_scale, find_one = find_one)
 
 
     def findwithin(self, ra, dec, rs_arcsec, method = "healpix", **qfunc_args):
@@ -480,7 +486,7 @@ class CatalogQuery():
         """
         
         nearby = self.findwithin(
-            ra = ra, dec = dec, rs_arcsec = rs_arcsec, method = method, **qfunc_args)
+            ra = ra, dec = dec, rs_arcsec = rs_arcsec, method = method, find_one = True, **qfunc_args)
         if nearby is None:
             return False
         else:
@@ -556,7 +562,6 @@ class CatalogQuery():
         start = time.time()
         for pp in tqdm.tqdm(points):
             buff = qfunc(pp[0], pp[1], rs_arcsec, method)
-            
             if (type(buff) == astropy.table.table.Table) or (buff):
                 tot_found += 1
         end = time.time()

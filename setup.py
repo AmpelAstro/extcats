@@ -12,19 +12,15 @@ from setuptools import setup
 
 setup(
     name='extcats',
-    version='1.2',
+    version='1.3',
     description='Tools to organize and query astronomical catalogs',
     author='Matteo Giomi',
     author_email='matteo.giomi@desy.de',
     packages=['extcats'],
     url = 'https://github.com/MatteoGiomi/extcats',
-    download_url = 'https://github.com/MatteoGiomi/extcats/archive/1.2.tar.gz',
+    download_url = 'https://github.com/MatteoGiomi/extcats/archive/1.3.tar.gz',
     install_requires=['pymongo', 'healpy', 'astropy', 'pandas', 'tqdm'],
     )
-
-
-# fuffa
-
 
 # ------- download test data ------- #
 # the million quasar catalog

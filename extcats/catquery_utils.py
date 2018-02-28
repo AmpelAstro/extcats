@@ -21,13 +21,15 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level = logging.INFO)
 
-def searcharound_HEALPix(ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest, hp_resol):
+def searcharound_HEALPix(
+    ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest, hp_resol, 
+    circular, ra_key, dec_key, find_one):
     """
         Returns sources in catalog contained in the the group of healpixels
         around the target coordinate that covers the search radius.
         
-        NOTE that this query does not return stuff in a circle, but rather in 
-        a square-like pattern of HEALpixels that covers the search radius.
+        NOTE that if circular is False, this function returns matches 
+        in square-like pattern of HEALPixels that covers the search radius.
         
         Parameters:
         -----------
@@ -54,7 +56,20 @@ def searcharound_HEALPix(ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest
             hp_resol: `float`
                 resolution of the HEALPix map in arcsec, given by:
                     nside2resol(2**hp_order, arcmin = True) * 60.
-                
+            
+            circular: `bool`, default: False
+                if True, the results are skimmed removing sources outside of the
+                circular search radius. In this case, the ra/dec keys arguments 
+                needs to be specified.
+            
+            ra[dec]_key: `str`
+                names of the coordinates in the catalog that will be used 
+                for the queries.
+            
+            find_one: `bool`
+                if True the collection is searched with the find_one method returning
+                just the first result of the query. if False, the method
+                find is used, returning all matching documents. 
             
         Returns:
         --------
@@ -92,14 +107,26 @@ def searcharound_HEALPix(ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest
     pix_group = pix_group[pix_group != -1].astype(int).tolist()
     
     # query the database for sources in these pixels
-    qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
+    if find_one:
+        qresults = [o for o in src_coll.find_one( {hp_key: { "$in": pix_group }} )]
+    else:
+        qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
+    
     if len(qresults)==0:
         return None
-    else:
+    elif not circular:
         return Table(qresults)
+    else:
+        tab = Table(qresults)
+        dists = get_distances(ra = ra, dec = dec, table = tab, ra_key = ra_key, dec_key = dec_key)
+        circular_tab = tab[dists <= rs_arcsec]
+        if len(circular_tab) == 0:
+            return None
+        else:
+            return circular_tab
 
 
-def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol):
+def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol, find_one):
     """
         Returns sources in catalog contained in the 9 healpixels
         around the target coordinate.
@@ -123,6 +150,11 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
             hp_nest: `bool`
                 weather or not the HEALPix grid has nested geometry.
             
+            find_one: `bool`
+                if True the collection is searched with the find_one method returning
+                just the first result of the query. if False, the method
+                find is used, returning all matching documents. 
+            
         Returns:
         --------
             
@@ -140,14 +172,17 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
     pix_group = [int(pix_id) for pix_id in neighbs if pix_id != -1] + [target_pix]
     
     # query the database for sources in these pixels
-    qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
+    if find_one:
+        qresults = [o for o in src_coll.find_one( {hp_key: { "$in": pix_group }} )]
+    else:
+        qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
     if len(qresults)==0:
         return None
     else:
         return Table(qresults)
 
 
-def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key):
+def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -176,6 +211,11 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key):
             s2d_key: `str`
                 name of document key for the geoJSON/'legacy-pair' field.
             
+            find_one: `bool`
+                if True the collection is searched with the find_one method returning
+                just the first result of the query. if False, the method
+                find is used, returning all matching documents. 
+            
         Returns:
         --------
             
@@ -192,14 +232,17 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key):
     
     # query and return
     geowithin={"$geoWithin": { "$centerSphere": [[ra, dec], radians(rs_arcsec/3600.)]}}
-    qresults = [o for o in src_coll.find({s2d_key: geowithin})]
+    if find_one:
+        qresults = [o for o in src_coll.find_one({s2d_key: geowithin})]
+    else:
+        qresults = [o for o in src_coll.find({s2d_key: geowithin})]
     if len(qresults)==0:
         return None
     else:
         return Table(qresults)
 
 
-def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, box_scale = 2):
+def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, box_scale = 2):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -229,6 +272,11 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, box_scale = 
             box_scale: `float`
                 size of the square used to pre-search candidates, in units of rs_arcsec.
             
+            find_one: `bool`
+                if True the collection is searched with the find_one method returning
+                just the first result of the query. if False, the method
+                find is used, returning all matching documents. 
+            
         Returns:
         --------
             
@@ -256,11 +304,45 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, box_scale = 
             dec_key: { "$gte" :  dec-box_size, "$lte" : dec+box_size},
             "$where": query_func
             }
-    qresults = [o for o in src_coll.find(qfilter)]
+    if find_one:
+        qresults = [o for o in src_coll.find_one(qfilter)]
+    else:
+        qresults = [o for o in src_coll.find(qfilter)]
     if len(qresults)==0:
         return None
     else:
         return Table(qresults)
+
+def get_distances(ra, dec, table, ra_key, dec_key):
+    """
+        given an astropy Table containing sources with position keys ra[dec]_key, 
+        return an array with the angluar distance (in arcsec) of each table entry
+        to the target ra, dec coordinates.
+        
+        Parameters:
+        -----------
+            
+            ra/dec: `float`
+                sky coordinates (deg), of the target direction. They have to be in the 
+                same refernce system as the ra[dec]_key in the Table.
+            
+            table: `astropy.table.Table`
+                table with the sources among which the closest to target will be
+                selected.
+            
+            ra[dec]_key: `str`
+                names of the coordinates (in deg) in the input table.
+        
+        Returns:
+        --------
+            
+            dist: `array` 
+                angular distances (in arcsec) each table entry to the target.
+    """
+    
+    target = SkyCoord(ra, dec, unit = "deg")
+    matches_pos = SkyCoord(table[ra_key], table[dec_key], unit = "deg")
+    return target.separation(matches_pos).arcsecond
 
 
 def get_closest(ra, dec, table, ra_key, dec_key):
@@ -289,13 +371,8 @@ def get_closest(ra, dec, table, ra_key, dec_key):
             
             dist: `float`/None
                 angular distance (in arcsec) of the closest source to the target.
-            
-                
     """
-    
-    target = SkyCoord(ra, dec, unit = "deg")
-    matches_pos = SkyCoord(table[ra_key], table[dec_key], unit = "deg")
-    d2t = target.separation(matches_pos).arcsecond
+    d2t = get_distances(ra, dec, table, ra_key, dec_key)
     match_id = argmin(d2t)
     return table[match_id], d2t[match_id]
 
