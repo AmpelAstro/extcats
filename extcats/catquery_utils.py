@@ -15,8 +15,6 @@ from healpy import ang2pix, pix2ang, get_all_neighbours, nside2resol
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
-from extcats import CatalogManager as CM
-
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level = logging.INFO)
