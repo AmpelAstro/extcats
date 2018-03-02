@@ -32,7 +32,7 @@ dest = os.path.join(mqc_testdata_dir, "heasarc_milliquas.tdat.gz")
 if not os.path.isfile(dest):
     print ("downloading the million quasar catalog \
 (MQC, https://heasarc.gsfc.nasa.gov/W3Browse/all/milliquas.html)")
-    urlretrieve("https://desycloud.desy.de/index.php/s/AsxkEJUJ8LrgJkd", dest)
+    urlretrieve("https://desycloud.desy.de/index.php/s/AsxkEJUJ8LrgJkd/download", dest)
 
 # a few small files from Panstarrs
 ps1_testdata_dir = "./testdata/PS1DR1_test"
