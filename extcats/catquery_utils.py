@@ -19,6 +19,16 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level = logging.INFO)
 
+# javascript function to compute the angular distances
+angdist_code = """
+    function get_nearby(lat1=%s, lon1=%s, lat2=%.10f, lon2=%.10f) {
+        var lat1_r = lat1 * Math.PI / 180.;
+        var lat2_r = lat2 * Math.PI / 180.;
+        var dLon_r = (lon2 - lon1) * Math.PI / 180.;
+        var a = ( Math.sin(lat1_r)*Math.sin(lat2_r) + Math.cos(lat1_r)*Math.cos(lat2_r) * Math.cos(dLon_r));
+        return (Math.acos(a) <= %.10f) ;
+        }"""
+
 def searcharound_HEALPix(
     ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest, hp_resol, 
     circular, ra_key, dec_key, find_one):
@@ -66,8 +76,8 @@ def searcharound_HEALPix(
             
             find_one: `bool`
                 if True the collection is searched with the find_one method returning
-                just the first result of the query. if False, the method
-                find is used, returning all matching documents. 
+                just the first result of the query. This behaviour is disabled if
+                the circular flag is set (the HP query returns stuff within circle).
             
         Returns:
         --------
@@ -84,33 +94,35 @@ def searcharound_HEALPix(
     pix_group = append(target_pix, neighbs)
     pixgroup_scale = hp_resol*sqrt(len(pix_group))
     
-    # cast a warning in case you have to enlarge the group
-    if pixgroup_scale/2. < rs_arcsec:
-        logging.warning(
-        "search radius %.5f arcsec too big for healpixels of order %d (each ~ %.5f arcsec)"%
-        (rs_arcsec, hp_order, hp_resol))
-    
     # increase the pixel group untill you cover the search radius.
     while pixgroup_scale/2. < rs_arcsec:
         pix_ras, pix_decs = pix2ang(nside, pix_group, lonlat = True, nest = hp_nest)
         new_pixels = get_all_neighbours(nside, pix_ras, pix_decs, nest = hp_nest, lonlat = True)
         pix_group = unique( append(pix_group, new_pixels.flatten() ) )
         pixgroup_scale = hp_resol*sqrt(len(pix_group))
-        big_group = True
-    if len(pix_group)>9:
+    
+    # cast a warning in case you have to enlarge the group too much
+    if len(pix_group)>5000:
         logging.warning(
-        "needed a group of %d healpixels with side of %d to cover search area."%(len(pix_group), sqrt(len(pix_group))))
+            "search radius %.5f arcsec too big for healpixels of order %d (each ~ %.5f arcsec)"%
+            (rs_arcsec, hp_order, hp_resol))
+        logging.warning(
+            "needed a group of %d healpixels with side of %d to cover search area."%
+            (len(pix_group), sqrt(len(pix_group))))
     
     # remove non-existing neigbours (in case of E/W/N/S) and cast to list
     pix_group = pix_group[pix_group != -1].astype(int).tolist()
     
     # query the database for sources in these pixels
-    if find_one:
-        qresults = [o for o in src_coll.find_one( {hp_key: { "$in": pix_group }} )]
+    if find_one and not circular:
+        qresult = src_coll.find_one({ hp_key: { "$in": pix_group } })
+        if qresult is None:
+            return None
+        qresults = [qresult]
     else:
         qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
     
-    if len(qresults)==0:
+    if len(qresults) == 0:
         return None
     elif not circular:
         return Table(qresults)
@@ -171,10 +183,10 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
     
     # query the database for sources in these pixels
     if find_one:
-        qresults = [o for o in src_coll.find_one( {hp_key: { "$in": pix_group }} )]
+        qresults = [src_coll.find_one( {hp_key: { "$in": pix_group }} )]
     else:
         qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
-    if len(qresults)==0:
+    if len(qresults) == 0:
         return None
     else:
         return Table(qresults)
@@ -231,10 +243,13 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one):
     # query and return
     geowithin={"$geoWithin": { "$centerSphere": [[ra, dec], radians(rs_arcsec/3600.)]}}
     if find_one:
-        qresults = [o for o in src_coll.find_one({s2d_key: geowithin})]
+        qresult = src_coll.find_one({s2d_key: geowithin})
+        if qresult is None:
+            return None
+        qresults = [qresult]
     else:
         qresults = [o for o in src_coll.find({s2d_key: geowithin})]
-    if len(qresults)==0:
+    if len(qresults) == 0:
         return None
     else:
         return Table(qresults)
@@ -284,14 +299,6 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, bo
     """
     
     # wrap your angular distance query into into javascript 
-    angdist_code = """
-    function get_nearby(lat1=%s, lon1=%s, lat2=%.10f, lon2=%.10f) {
-        var lat1_r = lat1 * Math.PI / 180.;
-        var lat2_r = lat2 * Math.PI / 180.;
-        var dLon_r = (lon2 - lon1) * Math.PI / 180.;
-        var a = ( Math.sin(lat1_r)*Math.sin(lat2_r) + Math.cos(lat1_r)*Math.cos(lat2_r) * Math.cos(dLon_r));
-        return (Math.acos(a) <= %.10f) ;
-        }"""
     query_func = Code(angdist_code%(
         "this.%s"%dec_key, "this.%s"%ra_key, dec, ra, radians(rs_arcsec/3600.)))
     
@@ -303,10 +310,13 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, bo
             "$where": query_func
             }
     if find_one:
-        qresults = [o for o in src_coll.find_one(qfilter)]
+        qresult = src_coll.find_one(qfilter)
+        if qresult is None:
+            return None
+        qresults = [qresult]
     else:
         qresults = [o for o in src_coll.find(qfilter)]
-    if len(qresults)==0:
+    if len(qresults) == 0:
         return None
     else:
         return Table(qresults)
@@ -375,7 +385,7 @@ def get_closest(ra, dec, table, ra_key, dec_key):
     return table[match_id], d2t[match_id]
 
 
-def random_point_sphere(npoints):
+def random_point_sphere(npoints, rnd_seed):
     """
         Utitlity function to provide test coordinates to measure 
         query times. It computes randomly distributed points on 
@@ -387,13 +397,17 @@ def random_point_sphere(npoints):
         npoints: `int`
             number of points to generate.
         
+        rnd_seed: `float` or None
+            if not None, this seed will be passed to np.random.
+        
         Returns:
         --------
         
         numpy array structured as [[ra1, dec1], [ra2, dec2], ...]
     """
     import numpy as np
-    np.random.seed(42)
+    if not rnd_seed is None:
+        np.random.seed(rnd_seed)
     points = np.zeros(2*npoints).reshape(npoints, 2)
     phi = - np.pi + 2*np.pi*np.random.ranf(npoints)
     theta = np.arcsin( 2*np.random.ranf(npoints) - 1 )

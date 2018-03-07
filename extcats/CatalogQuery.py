@@ -493,7 +493,7 @@ class CatalogQuery():
             return True
 
 
-    def test_queries(self, query_type, method, rs_arcsec, npoints=1e4, points=None):
+    def test_queries(self, query_type, method, rs_arcsec, npoints=1e4, points=None, rnd_seed = 42):
         """
             run test queries using a set of uniformly distributed points on 
             a sphere as targets. 
@@ -526,6 +526,9 @@ class CatalogQuery():
                 skipping the MC generation. points should be array like and have this
                 structure: [[ra1, dec1], [ra2, dec2], ...]
             
+            rnd_seed: `float` or None
+                if not None, this seed will be passed to np.random.
+            
             Returns:
             --------
             av_query_time: `float`
@@ -538,7 +541,7 @@ class CatalogQuery():
         # generate the random sample of points if none is given
         if points is None:
             from extcats.catquery_utils import random_point_sphere
-            points = random_point_sphere(int(npoints))
+            points = random_point_sphere(int(npoints), rnd_seed)
             self.logger.info("running test queries using %d random points"%(npoints))
         else:
             npoints = len(points)
@@ -555,20 +558,22 @@ class CatalogQuery():
             raise ValueError(
             "illegal value for parameter 'query_type': %s. Allowed: 'within', 'closest', 'binary'."%
             query_type)
-        self.logger.info("running %d test queries using function: %s"%(npoints, qfunc.__name__))
+        self.logger.info("running %d test queries using function: %s and method: %s"%
+            (npoints, qfunc.__name__, method))
         
         # measure query time
         tot_found = 0
         start = time.time()
         for pp in tqdm.tqdm(points):
             buff = qfunc(pp[0], pp[1], rs_arcsec, method)
-            if (type(buff) == astropy.table.table.Table) or (buff):
-                tot_found += 1
+            if ( type(buff) == tuple and buff == (None, None) ) or (buff is None) or (not buff):
+                continue
+            tot_found += 1
         end = time.time()
         total = end - start
         av_query_time = total / float(npoints)
-        self.logger.info("Total document found queries for: %d"%tot_found)
-        self.logger.info("Took %.2e sec for %d random queries. Average query time: %.3e sec"%
+        self.logger.info("Total document found in queries: %d"%tot_found)
+        self.logger.info("Took %.2e sec for %d random queries. Average query time: %.3e sec\n"%
             (total, int(npoints), av_query_time))
     
 
@@ -593,7 +598,6 @@ class CatalogQuery():
                 if no documents matches the query expression returns None.
         """
         
-        # query the database and return results
         qresults = [o for o in self.src_coll.find(qfilter)]
         if len(qresults)==0:
             return None
