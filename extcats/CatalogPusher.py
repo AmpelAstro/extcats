@@ -11,6 +11,33 @@ import numpy as np
 from inspect import getsourcelines
 
 
+def df_to_dictlist_force_types(df):
+    """
+        return the content of the dataframe as a list 
+        of dictionaries. The pandas.DataFrame.to_dict 
+        causes all the values to be casted to float64
+        type, and we don't want this.
+        
+        See:
+        https://stackoverflow.com/questions/31374928/dtype-changes-when-using-dataframe-to-dict
+        
+        This function is quite a bit faster than df.astype(object).to_dict('record')
+        
+        Parameters:
+        -----------
+        
+            df: `pandas.DataFrame`
+                dataframe to be parsed
+        
+        Returns:
+        --------
+            
+            list of dictionaries.
+    """
+    # this is not perfect, but is the best I can do now
+    return [dict(row._asdict()) for row in df.itertuples(index = False)]
+
+
 class CatalogPusher():
     """
         Class to insert static external catalogs into a mongodb.
@@ -188,7 +215,7 @@ class CatalogPusher():
                 (self.dict_modifier.__name__))
 
 
-    def insert_file_todb(self, raw_file, db_coll, dry = False):
+    def insert_file_todb(self, raw_file, db_coll, dry, fillna_val):
         """
             parse a raw file into a list of dictionaries that can be inserted in
             the database, and apply the dict modifier to each element. 
@@ -204,6 +231,11 @@ class CatalogPusher():
                 dry: `bool`
                     if True, raw files are read and parsed into documents, but 
                     the database won't be filled.
+                
+                fillna_val: scalar, dict, Series, or DataFrame
+                    if not None, this value is passed to df.fillna to convert NaNs
+                    into desider values. If None, nothing will happen. NOTE: this 
+                    option is only valid if the file reader returns a pandas.DataFrame.
             
             Returns:
             --------
@@ -217,13 +249,12 @@ class CatalogPusher():
         if not hasattr(self, "dict_modifier"):
             raise AttributeError(
             "no dict_modifier has been defined for this object. Use assign_dict_modifier first.")
-        
         self.logger.info("inserting %s in collection %s."%
             (raw_file, ".".join([db_coll.database.name, db_coll.name])))
         
         
         # read raw file, convert into documents, and insert to DB.
-        def convert_and_push(data, dry = dry):
+        def convert_and_push(data, dry = dry, fillna_val = fillna_val):
             """
                 helper function to treat the two cases (chunked/unchunked) the 
                 same way. Convert data into dictionaries (use pandas default 
@@ -231,13 +262,22 @@ class CatalogPusher():
                 pandas first. Returns the number of document inserted.
                 
             """
+            
+            # check for type and eventually get the astropy table into df
             if hasattr(data, "to_dict"):
-                raw_docs = data.to_dict("records")
+                data_df = data
             elif hasattr(data, "to_pandas"):
-                raw_docs = data.to_pandas().to_dict("records")
+                data_df = data.to_pandas()
             else:
                 raise NotImplementedError(
                 "only astropy Table or pandas DataFrame/TextReader are supported return types of file_reader.")
+            
+            # massage your dataframe and extract list od dictionaries
+            if not fillna_val is None:
+                data_df.fillna(fillna_val, inplace = True, downcast = False)
+            raw_docs = df_to_dictlist_force_types(data_df)
+            
+            # modify your records
             docs = [self.dict_modifier(dd) for dd in raw_docs]
             if not dry:
                 db_coll.insert_many(docs)
@@ -261,7 +301,7 @@ class CatalogPusher():
 
     def push_to_db(self, dbclient = None, dbname = None, coll_name = "srcs", 
         index_on = None, index_args = None, overwrite_coll = False,
-        append_to_coll = True, dry = False, filerange = None):
+        append_to_coll = True, dry = False, filerange = None, fillna_val = None):
         """
             insert all the files into the specified database.
             
@@ -299,6 +339,10 @@ class CatalogPusher():
                     parameter is passed to insert_file_todb. If True, raw files are 
                     read and parsed into documents, but the database won't be filled.
                 
+                fillna_val: scalar, dict, Series, or DataFrame
+                    if not None, this value is passed to df.fillna to convert NaNs
+                    into desider values. If None, nothing will happen. NOTE: this 
+                    option is only valid if the file reader returns a pandas.DataFrame.
         """
         
         # connect to databse and collection
@@ -346,7 +390,7 @@ class CatalogPusher():
         if (not filerange is None) and len(self.raw_files)>1:
             files = self.raw_files[filerange[0]:filerange[1]]
         for rawf in files:
-            self.insert_file_todb(rawf, coll, dry)
+            self.insert_file_todb(rawf, coll, dry, fillna_val)
         end = time.time()
         self.logger.info("done inserting catalog %s in collection %s.%s. Took %.2e seconds"%
             (self.cat_name, dbname, coll_name, end-start))
