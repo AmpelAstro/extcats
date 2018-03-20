@@ -3,8 +3,10 @@
 /dist/
 /extcats.egg-info/
 
-# test data
+# test data and script
 /testdata/
+extcats_test.py
+
 
 # notebooks rubbish
 /extcats/.ipynb_checkpoints/

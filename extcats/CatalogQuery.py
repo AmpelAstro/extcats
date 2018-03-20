@@ -239,7 +239,8 @@ class CatalogQuery():
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, src_coll = self.src_coll,
             hp_key = self.hp_key, hp_order = self.hp_order, 
             hp_nest = self.hp_nest, hp_resol = self.hp_resol, 
-            circular = circular, ra_key = self.ra_key, dec_key = self.dec_key, find_one = find_one)
+            circular = circular, ra_key = self.ra_key, dec_key = self.dec_key,
+            find_one = find_one, logger = self.logger)
 
 
     def findwithin_9HEALPix(self, ra, dec, find_one = False):
@@ -315,7 +316,8 @@ class CatalogQuery():
             raise RuntimeError("catalog has no geoJSON/legacy pair object. Cannot use it to query.")
         return searcharound_2Dsphere(
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, 
-            src_coll = self.src_coll, s2d_key = self.s2d_key, find_one = find_one)
+            src_coll = self.src_coll, s2d_key = self.s2d_key, find_one = find_one, 
+            logger = self.logger)
 
 
     def findwithin_RAW(self, ra, dec, rs_arcsec, box_scale = 2., find_one = False):

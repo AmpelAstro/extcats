@@ -16,7 +16,7 @@ from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
 import logging
-logger = logging.getLogger(__name__)
+module_logger = logging.getLogger(__name__)
 logging.basicConfig(level = logging.INFO)
 
 # javascript function to compute the angular distances
@@ -31,7 +31,7 @@ angdist_code = """
 
 def searcharound_HEALPix(
     ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest, hp_resol, 
-    circular, ra_key, dec_key, find_one):
+    circular, ra_key, dec_key, find_one, logger  = None):
     """
         Returns sources in catalog contained in the the group of healpixels
         around the target coordinate that covers the search radius.
@@ -79,6 +79,9 @@ def searcharound_HEALPix(
                 just the first result of the query. This behaviour is disabled if
                 the circular flag is set (the HP query returns stuff within circle).
             
+            logger: logging.logger istance
+                logging for this function. If None, the module-level logger is used.
+            
         Returns:
         --------
             
@@ -103,10 +106,12 @@ def searcharound_HEALPix(
     
     # cast a warning in case you have to enlarge the group too much
     if len(pix_group)>5000:
-        logging.warning(
+        if logger is None:
+            logger = module_logger
+        logger.warning(
             "search radius %.5f arcsec too big for healpixels of order %d (each ~ %.5f arcsec)"%
             (rs_arcsec, hp_order, hp_resol))
-        logging.warning(
+        logger.warning(
             "needed a group of %d healpixels with side of %d to cover search area."%
             (len(pix_group), sqrt(len(pix_group))))
     
@@ -192,7 +197,7 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
         return Table(qresults)
 
 
-def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one):
+def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one, logger = None):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -224,7 +229,10 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one):
             find_one: `bool`
                 if True the collection is searched with the find_one method returning
                 just the first result of the query. if False, the method
-                find is used, returning all matching documents. 
+                find is used, returning all matching documents.
+            
+            logger: logging.logger istance
+                logging for this function. If None, the module-level logger is used.
             
         Returns:
         --------
@@ -236,7 +244,9 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one):
     
     # fold the RA between -180 and 180.
     if ra > 180:
-        logging.warning(
+        if logger is None:
+            logger = module_logger
+        logger.debug(
         "2dsphere queries needs R.A in [-180, 180] deg. Folding with: ra = ra - 360 if ra > 180.")
         ra = ra - 360.
     
@@ -385,7 +395,7 @@ def get_closest(ra, dec, table, ra_key, dec_key):
     return table[match_id], d2t[match_id]
 
 
-def random_point_sphere(npoints, rnd_seed):
+def random_point_sphere(npoints, rnd_seed = None):
     """
         Utitlity function to provide test coordinates to measure 
         query times. It computes randomly distributed points on 
@@ -398,7 +408,8 @@ def random_point_sphere(npoints, rnd_seed):
             number of points to generate.
         
         rnd_seed: `float` or None
-            if not None, this seed will be passed to np.random.
+            if not None, this seed will be passed to np.random. Else use numpy 
+            defaults.
         
         Returns:
         --------
