@@ -101,7 +101,7 @@ class CatalogQuery():
                 raise KeyError("key %s not found among document fields: %s"%(k, ", ".join(test_doc.keys())))
         
         # check which index does the collection actually have
-        indexes = [k[:-2] for k in self.src_coll.index_information().keys()]
+        indexes = [v['key'][0][0] for v in self.src_coll.index_information().values()]
         self.logger.info("source collection has the following indexes: %s"%", ".join(indexes))
         if self.has_2dsphere and (not self.s2d_key in indexes):
             self.logger.warning("2dsphere key %s is not indexed."%(self.s2d_key))
@@ -142,7 +142,7 @@ class CatalogQuery():
             self.hp_key, self.hp_order, self.hp_nest, self.hp_index = (
                 hp_doc['key'], hp_doc['order'], hp_doc['nest'], hp_doc['is_indexed'] )
             self.hp_resol = nside2resol(2**self.hp_order, arcmin = True) * 60.
-            self.logger.info("set HEALPIX partition of order %d with key %s. Nested: %s, Inexed: %s, Resolution [\"]: %.3f"%(
+            self.logger.info("set HEALPIX partition of order %d with key '%s'. Nested: %s, Inexed: %s, Resolution [\"]: %.3f"%(
                 self.hp_order, self.hp_key, str(self.hp_nest), str(self.hp_index), self.hp_resol))
         else:
             self.has_hp = False
@@ -165,7 +165,7 @@ class CatalogQuery():
             self.has_2dsphere = True
             self.sphere2d_index = True
             self.s2d_key = sphere2d_doc[0]["key"]
-            self.logger.info("set 2dsphere key %s with format %s. Inexed: %s"%(
+            self.logger.info("set 2dsphere key '%s' with format %s. Inexed: %s"%(
                 self.s2d_key, sphere2d_doc[0]["pos_format"], self.sphere2d_index))
         else:
             self.logger.warning("mongo collections can have at most one 2dsphere key indexed.")
