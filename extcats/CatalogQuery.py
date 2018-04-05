@@ -400,7 +400,6 @@ class CatalogQuery():
         
         # if none is specified, use default
         if method is None:
-            self.logger.info("Using default method: %s"%method)
             method = self.default_method
         
         # now query according to your method
