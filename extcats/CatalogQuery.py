@@ -105,10 +105,10 @@ class CatalogQuery():
         self.logger.info("source collection has the following indexes: %s"%", ".join(indexes))
         if self.has_2dsphere and (not self.s2d_key in indexes):
             self.logger.warning("2dsphere key %s is not indexed."%(self.s2d_key))
-            self.hp_index = False
+            self.sphere2d_index = False
         if self.has_hp and (not self.hp_key in indexes):
             self.logger.warning("2dsphere key %s is not indexed."%(self.hp_key))
-            self.sphere2d_index = False
+            self.hp_index = False
         
         # now set default query method
         self.autoset_method()
@@ -146,6 +146,7 @@ class CatalogQuery():
                 self.hp_order, self.hp_key, str(self.hp_nest), str(self.hp_index), self.hp_resol))
         else:
             self.has_hp = False
+            self.hp_index = False
             self.logger.warning("no indexed HEALPix partition found for this catalog.")
 
 
@@ -159,6 +160,7 @@ class CatalogQuery():
         sphere2d_doc = [doc for doc in self.cat_db["meta"].find({"type": "sphere2d"})]
         if len(sphere2d_doc) == 0:
             self.has_2dsphere = False
+            self.sphere2d_index = False
             self.logger.warning("no 2d sphere key found in catalog %s"%self.cat_db.name)
         elif len(sphere2d_doc)==1 and sphere2d_doc[0]["is_indexed"]:
             # mongo collections can have at most one 2dsphere key indexed
