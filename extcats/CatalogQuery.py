@@ -109,6 +109,9 @@ class CatalogQuery():
         if self.has_hp and (not self.hp_key in indexes):
             self.logger.warning("2dsphere key %s is not indexed."%(self.hp_key))
             self.sphere2d_index = False
+        
+        # now set default query method
+        self.autoset_method()
 
 
     def check_healpix(self):
@@ -192,7 +195,7 @@ class CatalogQuery():
             self.default_method = "2dsphere"
         else:
             self.logger.warning(
-                "database doesn't even have any HEALPix / 2dsphere key. It will take ages to query.")
+                "database doesn't have any HEALPix / 2dsphere key. It will take ages to query.")
             self.default_method = "raw"
         self.logger.info("setting default search method to '%s'"%self.default_method)
 
@@ -360,7 +363,7 @@ class CatalogQuery():
             ra_key = self.ra_key, dec_key = self.dec_key, box_scale = box_scale, find_one = find_one)
 
 
-    def findwithin(self, ra, dec, rs_arcsec, method = "healpix", **qfunc_args):
+    def findwithin(self, ra, dec, rs_arcsec, method = None, **qfunc_args):
         """
             return all the catalog sources within rs_arcsec arcsecond from target
             positoin ra, dec (degrees).
@@ -375,7 +378,8 @@ class CatalogQuery():
                     maximum allowed distance to target position (in arcsec).
                 
                 method: `str`
-                    how to query the database. If
+                    how to query the database. If None, the method chosen by set_default_method
+                    is used. Else, if
                         - healpix: use the healpix index of the catalog (findwithin_HEALPix)
                         - 2dsphere: use mongodb searches in spherical geometry 
                         (findwithin_2Dsphere). 
@@ -393,6 +397,13 @@ class CatalogQuery():
                     if no sources are found, returns None.
                 
         """
+        
+        # if none is specified, use default
+        if method is None:
+            self.logger.info("Using default method: %s"%method)
+            method = self.default_method
+        
+        # now query according to your method
         if method == "healpix":
             return self.findwithin_HEALPix(ra, dec, rs_arcsec, **qfunc_args)
         elif method == "2dsphere":
@@ -404,7 +415,7 @@ class CatalogQuery():
                 "invalid method parameter: %s. Valid ones are 'healpix'/'2dsphere'/'raw'"%method)
 
 
-    def findclosest(self, ra, dec, rs_arcsec, method = "healpix", **qfunc_args):
+    def findclosest(self, ra, dec, rs_arcsec, method = None, **qfunc_args):
         """
             find the closest source to target ra and dec (degrees) and
             within rs_arcsec.
@@ -419,7 +430,8 @@ class CatalogQuery():
                     maximum allowed distance to target position (in arcsec).
                 
                 method: `str`
-                    how to query the database. If
+                    how to query the database. If None, the method chosen by set_default_method
+                    is used. Else, if
                         - healpix: use the healpix index of the catalog (findwithin_HEALPix)
                         - 2dsphere: use mongodb searches in spherical geometry 
                         (findwithin_2Dsphere). In this case a value for the sphere2d_key 
@@ -454,7 +466,7 @@ class CatalogQuery():
         return closest, min_dist
 
 
-    def binaryserach(self, ra, dec, rs_arcsec, method = "healpix", **qfunc_args):
+    def binaryserach(self, ra, dec, rs_arcsec, method = None, **qfunc_args):
         """
             Boolean query, returns True if any source has been found rs_arcsec
             arcseconds within target position.
@@ -469,7 +481,8 @@ class CatalogQuery():
                     maximum allowed distance to target position (in arcsec).
                 
                 method: `str`
-                    how to query the database. If
+                    how to query the database. If None, the method chosen by set_default_method
+                    is used. Else, if
                         - healpix: use the healpix index of the catalog (findwithin_HEALPix)
                         - 2dsphere: use mongodb searches in spherical geometry 
                         (findwithin_2Dsphere). In this case a value for the sphere2d_key 
