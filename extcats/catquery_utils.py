@@ -127,6 +127,7 @@ def searcharound_HEALPix(
     else:
         qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
     
+    # return
     if len(qresults) == 0:
         return None
     elif not circular:
