@@ -124,7 +124,7 @@ class CatalogQuery():
         hp_doc = None
         hp_docs = [doc for doc in self.cat_db["meta"].find({"type": "healpix"})]
         if len(hp_docs) == 0:
-            self.logger.warning("no HEALPix description found in metadata for catalog %s"%self.cat_db.name)
+            self.logger.info("no HEALPix description found in metadata for catalog %s"%self.cat_db.name)
         if len(hp_docs) == 1 and hp_docs[0]["is_indexed"]:
             hp_doc=hp_docs[0]
         else:
@@ -147,7 +147,7 @@ class CatalogQuery():
         else:
             self.has_hp = False
             self.hp_index = False
-            self.logger.warning("no indexed HEALPix partition found for this catalog.")
+            self.logger.info("no indexed HEALPix partition found for this catalog.")
 
 
     def check_sphere2d(self):
@@ -161,7 +161,7 @@ class CatalogQuery():
         if len(sphere2d_doc) == 0:
             self.has_2dsphere = False
             self.sphere2d_index = False
-            self.logger.warning("no 2d sphere key found in catalog %s"%self.cat_db.name)
+            self.logger.info("no 2d sphere key found in catalog %s"%self.cat_db.name)
         elif len(sphere2d_doc)==1 and sphere2d_doc[0]["is_indexed"]:
             # mongo collections can have at most one 2dsphere key indexed
             self.has_2dsphere = True
