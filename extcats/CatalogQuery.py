@@ -42,7 +42,7 @@ class CatalogQuery():
                 
                 ra[dec]_key: `str`
                     names of the coordinates in the catalog that will be used 
-                    for the queries.
+                    for the queries. Can be None if your database has geoJSON index.
                 
                 coll_name: `str`
                     name of the catalog collection containing the sources.
