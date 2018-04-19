@@ -97,7 +97,7 @@ class CatalogQuery():
 
         test_doc = self.src_coll.find_one()
         for k in important_keys:
-            if not k in test_doc.keys():
+            if (not k is None) and (not k in test_doc.keys()):
                 raise KeyError("key %s not found among document fields: %s"%(k, ", ".join(test_doc.keys())))
         
         # check which index does the collection actually have
