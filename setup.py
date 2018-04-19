@@ -5,7 +5,6 @@
 #
 # Author: M. Giomi (matteo.giomi@desy.de)
 
-import os
 from setuptools import setup
 
 setup(
