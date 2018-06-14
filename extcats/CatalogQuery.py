@@ -142,7 +142,7 @@ class CatalogQuery():
             self.hp_key, self.hp_order, self.hp_nest, self.hp_index = (
                 hp_doc['key'], hp_doc['order'], hp_doc['nest'], hp_doc['is_indexed'] )
             self.hp_resol = nside2resol(2**self.hp_order, arcmin = True) * 60.
-            self.logger.info("set HEALPIX partition of order %d with key '%s'. Nested: %s, Inexed: %s, Resolution [\"]: %.3f"%(
+            self.logger.info("set HEALPIX partition of order %d with key '%s'. Nested: %s, Indexed: %s, Resolution [\"]: %.3f"%(
                 self.hp_order, self.hp_key, str(self.hp_nest), str(self.hp_index), self.hp_resol))
         else:
             self.has_hp = False
@@ -167,7 +167,7 @@ class CatalogQuery():
             self.has_2dsphere = True
             self.sphere2d_index = True
             self.s2d_key = sphere2d_doc[0]["key"]
-            self.logger.info("set 2dsphere key '%s' with format %s. Inexed: %s"%(
+            self.logger.info("set 2dsphere key '%s' with format %s. Indexed: %s"%(
                 self.s2d_key, sphere2d_doc[0]["pos_format"], self.sphere2d_index))
         else:
             self.logger.warning("mongo collections can have at most one 2dsphere key indexed.")
@@ -202,7 +202,7 @@ class CatalogQuery():
         self.logger.info("setting default search method to '%s'"%self.default_method)
 
 
-    def findwithin_HEALPix(self, ra, dec, rs_arcsec, circular = True, find_one = False):
+    def findwithin_HEALPix(self, ra, dec, rs_arcsec, circular = True, find_one = False, **qfunc_args):
         """
             Returns sources in catalog contained in the the group of healpixels
             around the target coordinate that covers the search radius.
@@ -236,7 +236,7 @@ class CatalogQuery():
                     astropy table of the catalog entry for the found counterpart. If
                     no counpterpart is found returns None.
         """
-        
+
         if not self.has_hp:
             raise RuntimeError("catalog has no healpix index. Cannot use it to query.")
         
@@ -245,10 +245,11 @@ class CatalogQuery():
             hp_key = self.hp_key, hp_order = self.hp_order, 
             hp_nest = self.hp_nest, hp_resol = self.hp_resol, 
             circular = circular, ra_key = self.ra_key, dec_key = self.dec_key,
-            find_one = find_one, logger = self.logger)
+            find_one = find_one, prefilter = qfunc_args.get('prefilter'), 
+            postfilter = qfunc_args.get('postfilter'), logger = self.logger)
 
 
-    def findwithin_9HEALPix(self, ra, dec, find_one = False):
+    def findwithin_9HEALPix(self, ra, dec, find_one = False, **qfunc_args):
         """
             Returns sources in catalog contained in the 9 healpixels
             around the target coordinate.
@@ -279,10 +280,11 @@ class CatalogQuery():
         "queries sources in a 9-pixel square of %.3f arcsec side around target"%(3*self.hp_resol))
         return searcharound_9HEALPix(
             ra = ra, dec = dec, src_coll = self.src_coll, hp_key = self.hp_key, 
-            hp_order = self.hp_order, hp_nest = self.hp_nest, hp_resol = self.hp_resol, find_one = find_one)
+            hp_order = self.hp_order, hp_nest = self.hp_nest, hp_resol = self.hp_resol, find_one = find_one, 
+            prefilter = qfunc_args.get('prefilter'), postfilter = qfunc_args.get('postfilter'))
 
 
-    def findwithin_2Dsphere(self, ra, dec, rs_arcsec, find_one = False):
+    def findwithin_2Dsphere(self, ra, dec, rs_arcsec, find_one = False, **qfunc_args):
         """
             Returns sources in catalog within rs_arcsec from target position.
             
@@ -322,10 +324,11 @@ class CatalogQuery():
         return searcharound_2Dsphere(
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, 
             src_coll = self.src_coll, s2d_key = self.s2d_key, find_one = find_one, 
-            logger = self.logger)
+            logger = self.logger, prefilter = qfunc_args.get('prefilter'), 
+            postfilter = qfunc_args.get('postfilter'))
 
 
-    def findwithin_RAW(self, ra, dec, rs_arcsec, box_scale = 2., find_one = False):
+    def findwithin_RAW(self, ra, dec, rs_arcsec, box_scale = 2., find_one = False, **qfunc_args):
         """
             Returns sources in catalog within rs_arcsec from target position.
             
@@ -362,7 +365,8 @@ class CatalogQuery():
         """
         return searcharound_RAW(
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, src_coll = self.src_coll,
-            ra_key = self.ra_key, dec_key = self.dec_key, box_scale = box_scale, find_one = find_one)
+            ra_key = self.ra_key, dec_key = self.dec_key, box_scale = box_scale, find_one = find_one,
+            prefilter = qfunc_args.get('prefilter'), postfilter = qfunc_args.get('postfilter'))
 
 
     def findwithin(self, ra, dec, rs_arcsec, method = None, **qfunc_args):
@@ -399,7 +403,7 @@ class CatalogQuery():
                     if no sources are found, returns None.
                 
         """
-        
+
         # if none is specified, use default
         if method is None:
             method = self.default_method
@@ -509,7 +513,7 @@ class CatalogQuery():
             return True
 
 
-    def test_queries(self, query_type, method, rs_arcsec, npoints=1e4, points=None, rnd_seed = 42):
+    def test_queries(self, query_type, method, rs_arcsec, npoints=1e4, points=None, rnd_seed = 42, **qfunc_args):
         """
             run test queries using a set of uniformly distributed points on 
             a sphere as targets. 
@@ -551,7 +555,7 @@ class CatalogQuery():
                 average query time for npoints queries measured as (start-stop)/npoints
         """
         
-        # method specif imports
+        # method specific imports
         import time, tqdm, astropy
         
         # generate the random sample of points if none is given
@@ -581,7 +585,7 @@ class CatalogQuery():
         tot_found = 0
         start = time.time()
         for pp in tqdm.tqdm(points):
-            buff = qfunc(pp[0], pp[1], rs_arcsec, method)
+            buff = qfunc(pp[0], pp[1], rs_arcsec, method, **qfunc_args)
             if ( type(buff) == tuple and buff == (None, None) ) or (buff is None) or (not buff):
                 continue
             tot_found += 1

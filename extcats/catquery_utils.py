@@ -31,7 +31,7 @@ angdist_code = """
 
 def searcharound_HEALPix(
     ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest, hp_resol, 
-    circular, ra_key, dec_key, find_one, logger  = None):
+    circular, ra_key, dec_key, find_one, prefilter = None, postfilter = None, logger  = None):
     """
         Returns sources in catalog contained in the the group of healpixels
         around the target coordinate that covers the search radius.
@@ -59,7 +59,7 @@ def searcharound_HEALPix(
                 order of the HEALPix grid used to group sources.
             
             hp_nest: `bool`
-                weather or not the HEALPix grid has nested geometry.
+                whether or not the HEALPix grid has nested geometry.
             
             hp_resol: `float`
                 resolution of the HEALPix map in arcsec, given by:
@@ -78,6 +78,18 @@ def searcharound_HEALPix(
                 if True the collection is searched with the find_one method returning
                 just the first result of the query. This behaviour is disabled if
                 the circular flag is set (the HP query returns stuff within circle).
+
+            prefilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain field are of interest:
+                    prefilter = {'field': field_number}
+                This condition is checked BEFORE searching for healpix
+
+            postfilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain rcid are of interest:
+                    postfilter = {'rcid': rcid_number}
+                This condition is checked AFTER searching for healpix       
             
             logger: logging.logger istance
                 logging for this function. If None, the module-level logger is used.
@@ -117,16 +129,38 @@ def searcharound_HEALPix(
     
     # remove non-existing neigbours (in case of E/W/N/S) and cast to list
     pix_group = pix_group[pix_group != -1].astype(int).tolist()
+    hp_query = {hp_key:{'$in': pix_group}}
+    query_prefilter = { '$and': [prefilter, hp_query  ] }
+    query_postfilter = { '$and': [hp_query, postfilter ] }
+    query_bothfilters = { '$and': [prefilter, hp_query, postfilter] }      
     
     # query the database for sources in these pixels
     if find_one and not circular:
-        qresult = src_coll.find_one({ hp_key: { "$in": pix_group } })
+        if prefilter is None:
+            if postfilter is None:
+                qresult = src_coll.find_one(hp_query)
+            else:
+                qresult = src_coll.find_one(query_postfilter)
+        else:
+            if postfilter is None:
+                qresult = src_coll.find_one(query_prefilter)
+            else:
+                qresult = src_coll.find_one(query_bothfilters)
         if qresult is None:
             return None
         qresults = [qresult]
     else:
-        qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
-    
+        if prefilter is None:
+            if postfilter is None:
+                qresults = [o for o in src_coll.find(hp_query) ]
+            else:
+                qresults = [o for o in src_coll.find(query_postfilter) ]
+        else:
+            if postfilter is None:
+                qresults = [o for o in src_coll.find(query_prefilter) ]
+            else:
+                qresults = [o for o in src_coll.find(query_bothfilters) ]
+
     # return
     if len(qresults) == 0:
         return None
@@ -142,7 +176,7 @@ def searcharound_HEALPix(
             return circular_tab
 
 
-def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol, find_one):
+def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol, find_one, prefilter = None, postfilter = None):
     """
         Returns sources in catalog contained in the 9 healpixels
         around the target coordinate.
@@ -170,6 +204,18 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
                 if True the collection is searched with the find_one method returning
                 just the first result of the query. if False, the method
                 find is used, returning all matching documents. 
+
+            prefilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain field are of interest:
+                    prefilter = {'field': field_number}
+                This condition is checked BEFORE searching for healpix
+
+            postfilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain rcid are of interest:
+                    postfilter = {'rcid': rcid_number}
+                This condition is checked AFTER searching for healpix     
             
         Returns:
         --------
@@ -186,19 +232,41 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
     
     # remove non-existing neigbours (in case of E/W/N/S) and add center pixel
     pix_group = [int(pix_id) for pix_id in neighbs if pix_id != -1] + [target_pix]
+    hp_query = {hp_key:{'$in': pix_group}}
+    query_prefilter = { '$and': [prefilter, hp_query  ] }
+    query_postfilter = { '$and': [hp_query, postfilter ] }
+    query_bothfilters = { '$and': [prefilter, hp_query, postfilter] }  
     
     # query the database for sources in these pixels
     if find_one:
-        qresults = [src_coll.find_one( {hp_key: { "$in": pix_group }} )]
+        if prefilter is None:
+            if postfilter is None:
+                qresults = [src_coll.find_one(hp_query)]
+            else:
+                qresults = [src_coll.find_one(query_postfilter)]
+        else:
+            if postfilter is None:
+                qresults = [src_coll.find_one(query_prefilter)]
+            else:
+                qresults = [src_coll.find_one(query_bothfilters)]
     else:
-        qresults = [o for o in src_coll.find( {hp_key: { "$in": pix_group }} )]
+        if prefilter is None:
+            if postfilter is None:
+                qresults = [src_coll.find(hp_query)]
+            else:
+                qresults = [src_coll.find(query_postfilter)]
+        else:
+            if postfilter is None:
+                qresults = [src_coll.find(query_prefilter)]
+            else:
+                qresults = [src_coll.find(query_bothfilters)]
+    
     if len(qresults) == 0:
         return None
     else:
         return Table(qresults)
 
-
-def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one, logger = None):
+def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one, prefilter = None, postfilter = None, logger = None):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -231,6 +299,18 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one, logge
                 if True the collection is searched with the find_one method returning
                 just the first result of the query. if False, the method
                 find is used, returning all matching documents.
+
+            prefilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain field are of interest:
+                    prefilter = {'field': field_number}
+                This condition is checked BEFORE searching in the 2dsphere 
+
+            postfilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain rcid are of interest:
+                    postfilter = {'rcid': rcid_number}
+                This condition is checked AFTER searching in the 2dsphere     
             
             logger: logging.logger istance
                 logging for this function. If None, the module-level logger is used.
@@ -252,21 +332,46 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one, logge
         ra = ra - 360.
     
     # query and return
-    geowithin={"$geoWithin": { "$centerSphere": [[ra, dec], radians(rs_arcsec/3600.)]}}
+    geowithin = {"$geoWithin": { "$centerSphere": [[ra, dec], radians(rs_arcsec/3600.)]}}
+    geoquery = {s2d_key: geowithin}
+    query_prefilter = { '$and': [prefilter, geoquery  ] }
+    query_postfilter = { '$and': [geoquery, postfilter ] }
+    query_bothfilters = { '$and': [prefilter, geoquery, postfilter] }  
+
+
     if find_one:
-        qresult = src_coll.find_one({s2d_key: geowithin})
+        if prefilter is None:
+            if postfilter is None:
+                qresult = src_coll.find_one(geoquery)
+            else:
+                qresult = src_coll.find_one(query_postfilter)
+        else:
+            if postfilter is None:
+                qresult = src_coll.find_one(query_prefilter)
+            else:
+                qresult = src_coll.find_one(query_bothfilters)
         if qresult is None:
             return None
         qresults = [qresult]
+
     else:
-        qresults = [o for o in src_coll.find({s2d_key: geowithin})]
+        if prefilter is None:
+            if postfilter is None:
+                qresults = [o for o in src_coll.find(geoquery)]
+            else:
+                qresults = [o for o in src_coll.find(query_postfilter)]
+        else:
+            if postfilter is None:
+                qresults = [o for o in src_coll.find(query_prefilter)]
+            else:
+                qresults = [o for o in src_coll.find(query_bothfilters)]
     if len(qresults) == 0:
         return None
     else:
         return Table(qresults)
 
 
-def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, box_scale = 2):
+def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, box_scale = 2, prefilter = None, postfilter = None):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -300,6 +405,18 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, bo
                 if True the collection is searched with the find_one method returning
                 just the first result of the query. if False, the method
                 find is used, returning all matching documents. 
+
+            prefilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain field are of interest:
+                    prefilter = {'field': field_number}
+                This condition is checked BEFORE searching in the box 
+
+            postfilter: 'dict'
+                contains an additional condition on the queried objects.
+                For example, if only stars in a certain rcid are of interest:
+                    postfilter = {'rcid': rcid_number}
+                This condition is checked AFTER searching in the box 
             
         Returns:
         --------
@@ -320,13 +437,38 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, bo
             dec_key: { "$gte" :  dec-box_size, "$lte" : dec+box_size},
             "$where": query_func
             }
+    query_prefilter = { '$and': [prefilter, qfilter  ] }
+    query_postfilter = { '$and': [qfilter, postfilter ] }
+    query_bothfilters = { '$and': [prefilter, qfilter, postfilter] }  
+
     if find_one:
-        qresult = src_coll.find_one(qfilter)
+        if prefilter is None:
+            if postfilter is None:
+                qresult = src_coll.find_one(qfilter)
+            else:
+                qresult = src_coll.find_one(query_postfilter)
+        else:
+            if postfilter is None:
+                qresult = src_coll.find_one(query_prefilter)
+            else:
+                qresult = src_coll.find_one(query_bothfilters)
+
         if qresult is None:
             return None
         qresults = [qresult]
+
     else:
-        qresults = [o for o in src_coll.find(qfilter)]
+        if prefilter is None:
+            if postfilter is None:
+                qresults = [o for o in src_coll.find(qfilter)]
+            else:
+                qresults = [o for o in src_coll.find(query_postfilter)]
+        else:
+            if postfilter is None:
+                qresults = [o for o in src_coll.find(query_prefilter)]
+            else:
+                qresults = [o for o in src_coll.find(query_bothfilters)]
+
     if len(qresults) == 0:
         return None
     else:
