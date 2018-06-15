@@ -245,8 +245,8 @@ class CatalogQuery():
             hp_key = self.hp_key, hp_order = self.hp_order, 
             hp_nest = self.hp_nest, hp_resol = self.hp_resol, 
             circular = circular, ra_key = self.ra_key, dec_key = self.dec_key,
-            find_one = find_one, prefilter = qfunc_args.get('prefilter'), 
-            postfilter = qfunc_args.get('postfilter'), logger = self.logger)
+            find_one = find_one, pre_filter = qfunc_args.get('pre_filter'), 
+            post_filter = qfunc_args.get('post_filter'), logger = self.logger)
 
 
     def findwithin_9HEALPix(self, ra, dec, find_one = False, **qfunc_args):
@@ -281,7 +281,7 @@ class CatalogQuery():
         return searcharound_9HEALPix(
             ra = ra, dec = dec, src_coll = self.src_coll, hp_key = self.hp_key, 
             hp_order = self.hp_order, hp_nest = self.hp_nest, hp_resol = self.hp_resol, find_one = find_one, 
-            prefilter = qfunc_args.get('prefilter'), postfilter = qfunc_args.get('postfilter'))
+            pre_filter = qfunc_args.get('pre_filter'), post_filter = qfunc_args.get('post_filter'))
 
 
     def findwithin_2Dsphere(self, ra, dec, rs_arcsec, find_one = False, **qfunc_args):
@@ -324,8 +324,8 @@ class CatalogQuery():
         return searcharound_2Dsphere(
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, 
             src_coll = self.src_coll, s2d_key = self.s2d_key, find_one = find_one, 
-            logger = self.logger, prefilter = qfunc_args.get('prefilter'), 
-            postfilter = qfunc_args.get('postfilter'))
+            logger = self.logger, pre_filter = qfunc_args.get('pre_filter'), 
+            post_filter = qfunc_args.get('post_filter'))
 
 
     def findwithin_RAW(self, ra, dec, rs_arcsec, box_scale = 2., find_one = False, **qfunc_args):
@@ -366,7 +366,7 @@ class CatalogQuery():
         return searcharound_RAW(
             ra = ra, dec = dec, rs_arcsec = rs_arcsec, src_coll = self.src_coll,
             ra_key = self.ra_key, dec_key = self.dec_key, box_scale = box_scale, find_one = find_one,
-            prefilter = qfunc_args.get('prefilter'), postfilter = qfunc_args.get('postfilter'))
+            pre_filter = qfunc_args.get('pre_filter'), post_filter = qfunc_args.get('post_filter'))
 
 
     def findwithin(self, ra, dec, rs_arcsec, method = None, **qfunc_args):
