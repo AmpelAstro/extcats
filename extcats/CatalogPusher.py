@@ -215,7 +215,7 @@ class CatalogPusher():
                 (self.dict_modifier.__name__))
 
 
-    def insert_file_todb(self, raw_file, db_coll, dry, fillna_val):
+    def insert_file_todb(self, raw_file, db_coll, dry, fillna_val, ordered):
         """
             parse a raw file into a list of dictionaries that can be inserted in
             the database, and apply the dict modifier to each element.
@@ -236,6 +236,9 @@ class CatalogPusher():
                     if not None, this value is passed to df.fillna to convert NaNs
                     into desider values. If None, nothing will happen. NOTE: this
                     option is only valid if the file reader returns a pandas.DataFrame.
+                
+                ordered: `bool`
+                    parameter passed to pymongo insert_many function.
 
             Returns:
             --------
@@ -252,15 +255,13 @@ class CatalogPusher():
         self.logger.info("inserting %s in collection %s."%
             (raw_file, ".".join([db_coll.database.name, db_coll.name])))
 
-
         # read raw file, convert into documents, and insert to DB.
-        def convert_and_push(data, dry = dry, fillna_val = fillna_val):
+        def convert_and_push(data, dry=dry, fillna_val=fillna_val, ordered=ordered):
             """
                 helper function to treat the two cases (chunked/unchunked) the
                 same way. Convert data into dictionaries (use pandas default
                 functionality) if it's an astropy Table convert it into
                 pandas first. Returns the number of document inserted.
-
             """
 
             # check for type and eventually get the astropy table into df
@@ -276,11 +277,11 @@ class CatalogPusher():
             if not fillna_val is None:
                 data_df.fillna(fillna_val, inplace = True, downcast = False)
             raw_docs = df_to_dictlist_force_types(data_df)
-
+            
             # modify your records
             docs = [self.dict_modifier(dd) for dd in raw_docs]
             if not dry:
-                db_coll.insert_many(docs)
+                db_coll.insert_many(docs, ordered=ordered)
             return len(docs)
 
         # now read, parse, and fill.
@@ -300,7 +301,7 @@ class CatalogPusher():
 
 
     def push_to_db(self, dbclient = None, dbname = None, coll_name = "srcs",
-        index_on = None, index_args = None, overwrite_coll = False,
+        index_on = None, index_args = None, ordered = True, overwrite_coll = False,
         append_to_coll = True, dry = False, filerange = None, fillna_val = None):
         """
             insert all the files into the specified database.
@@ -326,6 +327,13 @@ class CatalogPusher():
                     additional arguments to be passed to pymongo collection create_index
                     method. The list should have the same length as the number of indexes
                     to be created (index_args).
+
+                ordered: `bool`
+                    parameter passed to pymongo insert_many function. "If True documents will 
+                    be inserted on the server serially, in the order provided. If an error 
+                    occurs all remaining inserts are aborted. If False, documents will be 
+                    inserted on the server in arbitrary order, possibly in parallel, 
+                    and all document inserts will be attempted."
 
                 overwrite_coll: `bool`
                     if True and another collection with the given name exists, it will
@@ -390,7 +398,7 @@ class CatalogPusher():
         if (not filerange is None) and len(self.raw_files)>1:
             files = self.raw_files[filerange[0]:filerange[1]]
         for rawf in files:
-            self.insert_file_todb(rawf, coll, dry, fillna_val)
+            self.insert_file_todb(rawf, coll, dry, fillna_val, ordered)
         end = time.time()
         self.logger.info("done inserting catalog %s in collection %s.%s. Took %.2e seconds"%
             (self.cat_name, dbname, coll_name, end-start))

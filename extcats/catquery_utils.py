@@ -30,15 +30,15 @@ angdist_code = """
         }"""
 
 
-def filters_logical_and(my_filter, pre_filter, post_filter):
+def filters_logical_and(f1, f2, f3):
     """
         given three filters, returns the logical and of these filters
-        in the order: pre_filter AND my_filter AND post_filter.
+        in the order: f1 AND f2 AND f3.
         
         Parameters:
         -----------
             
-            my_filter, pre_filter, post_filter: `dict`
+            f[1/2/3]: `dict`
                 filter expression to be combined.
         
         Returns:
@@ -47,14 +47,14 @@ def filters_logical_and(my_filter, pre_filter, post_filter):
             `dict` with the order-preserving combination of the filters.
     """
     
-    if pre_filter is None and post_filter is None:
-        return my_filter
-    elif post_filter is None:
-        return {'$and': [pre_filter, my_filter]}
-    elif pre_filter is None:
-        return {'$and': [my_filter, post_filter]}
+    if f1 is None and f3 is None:
+        return f2
+    elif f3 is None:
+        return {'$and': [f1, f2]}
+    elif f1 is None:
+        return {'$and': [f2, f3]}
     else:
-        return {'$and': [pre_filter, my_filter, post_filter]}
+        return {'$and': [f1, f2, f3]}
 
 
 def query_and_return(qfilter, coll, find_one, to_table = True):
@@ -199,7 +199,7 @@ def searcharound_HEALPix(
     
     # define your filter
     hp_query = {hp_key:{'$in': pix_group}}
-    combined_filter = filters_logical_and(hp_query, pre_filter, post_filter)
+    combined_filter = filters_logical_and(pre_filter, hp_query, post_filter)
     
     # query the database for sources in these pixels
     qresults = query_and_return(combined_filter, src_coll, find_one, to_table=False)
@@ -275,7 +275,7 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
     # remove non-existing neigbours (in case of E/W/N/S) and add center pixel
     pix_group = [int(pix_id) for pix_id in neighbs if pix_id != -1] + [target_pix]
     hp_query = {hp_key:{'$in': pix_group}}
-    combined_filter = filters_logical_and(hp_query, pre_filter, post_filter)
+    combined_filter = filters_logical_and(pre_filter, hp_query, post_filter)
 
     # query the database for sources in these pixels
     return query_and_return(combined_filter, src_coll, find_one)
@@ -350,7 +350,7 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one,
     # define filter
     geowithin = {"$geoWithin": { "$centerSphere": [[ra, dec], radians(rs_arcsec/3600.)]}}
     geoquery = {s2d_key: geowithin}
-    combined_filter = filters_logical_and(geoquery, pre_filter, post_filter)
+    combined_filter = filters_logical_and(pre_filter, geoquery, post_filter)
 
     # query and return
     return query_and_return(combined_filter, src_coll, find_one)
@@ -422,7 +422,7 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, bo
             dec_key: { "$gte" :  dec-box_size, "$lte" : dec+box_size},
             "$where": query_func
             }
-    combined_filter = filters_logical_and(qfilter, pre_filter, post_filter)
+    combined_filter = filters_logical_and(pre_filter, qfilter, post_filter)
 
     # query and return
     return query_and_return(combined_filter, src_coll, find_one)

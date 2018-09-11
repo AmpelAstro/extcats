@@ -9,7 +9,7 @@ from setuptools import setup
 
 setup(
     name='extcats',
-    version='2.0',
+    version='2.1',
     description='Tools to organize and query astronomical catalogs',
     author='Matteo Giomi',
     author_email='matteo.giomi@desy.de',
