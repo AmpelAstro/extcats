@@ -341,10 +341,6 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one,
     
     # fold the RA between -180 and 180.
     if ra > 180:
-        if logger is None:
-            logger = module_logger
-        logger.debug(
-        "2dsphere queries needs R.A in [-180, 180] deg. Folding with: ra = ra - 360 if ra > 180.")
         ra = ra - 360.
     
     # define filter
