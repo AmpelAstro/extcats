@@ -87,7 +87,7 @@ def query_and_return(qfilter, coll, find_one, to_table = True):
             return None
         qresults = [qresult]
     else:
-        qresults = [o for o in coll.find(qfilter)]
+        qresults = list(coll.find(qfilter))
     if len(qresults) == 0:
         return None
     elif to_table:

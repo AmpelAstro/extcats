@@ -66,7 +66,7 @@ class CatalogQuery():
         self.dbclient = dbclient
         if dbclient is None:
             self.dbclient = pymongo.MongoClient()
-        self.logger.info("using mongo client at %s:%d"%(self.dbclient.address))
+        self.logger.debug("using mongo client at %s:%d"%(self.dbclient.address))
         
         # find database and collection
         if not cat_name in self.dbclient.database_names():
@@ -75,8 +75,8 @@ class CatalogQuery():
         if not coll_name in self.cat_db.collection_names():
             raise KeyError("cannot find collection %s in database %s"%(coll_name, self.cat_db.name))
         self.src_coll = self.cat_db[coll_name]
-        self.logger.info("connected to collection %s of database %s."%(coll_name, self.cat_db.name))
-        self.logger.info("found %d documents in source collection %s."%(self.src_coll.count(), coll_name))
+        self.logger.info("connected to collection %s of database %s. %s documents in source collection %s."%
+            (coll_name, self.cat_db.name, self.src_coll.count(), coll_name))
         
         # read metadata for the catalog
         if not "meta" in self.cat_db.collection_names():
@@ -102,7 +102,7 @@ class CatalogQuery():
         
         # check which index does the collection actually have
         indexes = [v['key'][0][0] for v in self.src_coll.index_information().values()]
-        self.logger.info("source collection has the following indexes: %s"%", ".join(indexes))
+        self.logger.debug("source collection has the following indexes: %s"%", ".join(indexes))
         if self.has_2dsphere and (not self.s2d_key in indexes):
             self.logger.warning("2dsphere key %s is not indexed."%(self.s2d_key))
             self.sphere2d_index = False
@@ -124,13 +124,13 @@ class CatalogQuery():
         hp_doc = None
         hp_docs = [doc for doc in self.cat_db["meta"].find({"type": "healpix"})]
         if len(hp_docs) == 0:
-            self.logger.info("no HEALPix description found in metadata for catalog %s"%self.cat_db.name)
+            self.logger.debug("no HEALPix description found in metadata for catalog %s"%self.cat_db.name)
         if len(hp_docs) == 1 and hp_docs[0]["is_indexed"]:
             hp_doc=hp_docs[0]
         else:
-            self.logger.info("found %d HEALPix partitions for this catalog."%len(hp_docs))
+            self.logger.debug("found %d HEALPix partitions for this catalog."%len(hp_docs))
             for i, _ in enumerate(hp_docs): self.logger.info("#%d %s"%(i,repr(_)))
-            self.logger.info("Using the higher-order one of those that are indexed.")
+            self.logger.debug("Using the higher-order one of those that are indexed.")
             max_order = 0.
             for hpd in hp_docs:
                 if hpd["is_indexed"] and hpd["order"] > max_order:
@@ -147,7 +147,7 @@ class CatalogQuery():
         else:
             self.has_hp = False
             self.hp_index = False
-            self.logger.info("no indexed HEALPix partition found for this catalog.")
+            self.logger.debug("no indexed HEALPix partition found for this catalog.")
 
 
     def check_sphere2d(self):
@@ -161,7 +161,7 @@ class CatalogQuery():
         if len(sphere2d_doc) == 0:
             self.has_2dsphere = False
             self.sphere2d_index = False
-            self.logger.info("no 2d sphere key found in catalog %s"%self.cat_db.name)
+            self.logger.debug("no 2d sphere key found in catalog %s"%self.cat_db.name)
         elif len(sphere2d_doc)==1 and sphere2d_doc[0]["is_indexed"]:
             # mongo collections can have at most one 2dsphere key indexed
             self.has_2dsphere = True

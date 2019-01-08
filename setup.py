@@ -9,12 +9,12 @@ from setuptools import setup
 
 setup(
     name='extcats',
-    version='2.3',
+    version='2.4',
     description='Tools to organize and query astronomical catalogs',
     author='Matteo Giomi',
     author_email='matteo.giomi@desy.de',
     packages=['extcats'],
     url = 'https://github.com/MatteoGiomi/extcats',
-    download_url = 'https://github.com/MatteoGiomi/extcats/archive/2.3.tar.gz',
+    download_url = 'https://github.com/MatteoGiomi/extcats/archive/2.4.tar.gz',
     install_requires=['pymongo', 'healpy', 'astropy', 'pandas', 'tqdm'],
     )
