@@ -57,7 +57,7 @@ def filters_logical_and(f1, f2, f3):
         return {'$and': [f1, f2, f3]}
 
 
-def query_and_return(qfilter, coll, find_one, to_table = True):
+def query_and_return(qfilter, projection, coll, find_one, to_table = True):
     """
         query a collection with a given filter and return the results.
         
@@ -82,12 +82,12 @@ def query_and_return(qfilter, coll, find_one, to_table = True):
     """
     
     if find_one:
-        qresult = coll.find_one(qfilter)
+        qresult = coll.find_one(qfilter, projection)
         if qresult is None:
             return None
         qresults = [qresult]
     else:
-        qresults = list(coll.find(qfilter))
+        qresults = list(coll.find(qfilter, projection))
     if len(qresults) == 0:
         return None
     elif to_table:
@@ -98,7 +98,7 @@ def query_and_return(qfilter, coll, find_one, to_table = True):
 
 def searcharound_HEALPix(
     ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest, hp_resol, 
-    circular, ra_key, dec_key, find_one, pre_filter = None, post_filter = None, logger  = None):
+    circular, ra_key, dec_key, find_one, pre_filter = None, post_filter = None, projection={"_id": 0}, logger  = None):
     """
         Returns sources in catalog contained in the the group of healpixels
         around the target coordinate that covers the search radius.
@@ -202,7 +202,8 @@ def searcharound_HEALPix(
     combined_filter = filters_logical_and(pre_filter, hp_query, post_filter)
     
     # query the database for sources in these pixels
-    qresults = query_and_return(combined_filter, src_coll, find_one, to_table=False)
+    qresults = query_and_return(combined_filter, projection, src_coll, find_one, to_table=False)
+
     if qresults is None:
         return None
     if not circular:
@@ -218,7 +219,7 @@ def searcharound_HEALPix(
 
 
 def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol, 
-    find_one, pre_filter = None, post_filter = None):
+    find_one, pre_filter = None, post_filter = None, projection={"_id": 0}):
     """
         Returns sources in catalog contained in the 9 healpixels
         around the target coordinate.
@@ -278,11 +279,11 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
     combined_filter = filters_logical_and(pre_filter, hp_query, post_filter)
 
     # query the database for sources in these pixels
-    return query_and_return(combined_filter, src_coll, find_one)
+    return query_and_return(combined_filter, projection, src_coll, find_one)
 
 
 def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one, 
-    pre_filter = None, post_filter = None, logger = None):
+    pre_filter = None, post_filter = None, projection={"_id": 0, "pos": 0}, logger = None):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -349,10 +350,10 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one,
     combined_filter = filters_logical_and(pre_filter, geoquery, post_filter)
 
     # query and return
-    return query_and_return(combined_filter, src_coll, find_one)
+    return query_and_return(combined_filter, projection, src_coll, find_one)
 
 
-def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, box_scale = 2, pre_filter = None, post_filter = None):
+def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, box_scale = 2, pre_filter = None, post_filter = None, projection={"_id": 0, "pos": 0}):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -421,7 +422,7 @@ def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, bo
     combined_filter = filters_logical_and(pre_filter, qfilter, post_filter)
 
     # query and return
-    return query_and_return(combined_filter, src_coll, find_one)
+    return query_and_return(combined_filter, projection, src_coll, find_one)
 
 
 def get_distances(ra, dec, table, ra_key, dec_key):
