@@ -28,7 +28,7 @@ class CatalogQuery():
         class to query external catalogs.
     """
     
-    def __init__(self, cat_name, ra_key, dec_key, coll_name = "srcs", 
+    def __init__(self, cat_name, ra_key=None, dec_key=None, coll_name = "srcs", 
         dbclient = None, logger =  None):
         """
             Connect to the desired database and collection. Retrive information
@@ -85,10 +85,9 @@ class CatalogQuery():
         # check for healpix and sphere2d support
         self.check_healpix()
         self.check_sphere2d()
+        self.guess_coord_keys()
         
         # check if query relevant keys are contained in the database
-        self.ra_key = ra_key
-        self.dec_key = dec_key
         important_keys  = [self.ra_key, self.dec_key]
         if self.has_hp:
             important_keys.append(self.hp_key)
@@ -112,6 +111,16 @@ class CatalogQuery():
         
         # now set default query method
         self.autoset_method()
+
+
+    def guess_coord_keys(self, ra_key=None, dec_key=None):
+        doc = self.cat_db["meta"].find_one({"_id": "keys"})
+        if doc:
+            self.ra_key = ra_key or doc["ra"]
+            self.dec_key = dec_key or doc["dec"]
+        else:
+            self.ra_key = ra_key
+            self.dec_key = dec_key
 
 
     def check_healpix(self):
