@@ -121,6 +121,10 @@ class CatalogQuery():
         else:
             self.ra_key = ra_key
             self.dec_key = dec_key
+        if self.ra_key is None:
+            raise ValueError("ra_key not found in metadata or provided as kwarg")
+        if self.dec_key is None:
+            raise ValueError("dec_key not found in metadata or provided as kwarg")
 
 
     def check_healpix(self):
