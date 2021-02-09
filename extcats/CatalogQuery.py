@@ -163,6 +163,7 @@ class CatalogQuery():
         else:
             self.has_hp = False
             self.hp_index = False
+            self.hp_key = None
             self.logger.debug("no indexed HEALPix partition found for this catalog.")
 
 
