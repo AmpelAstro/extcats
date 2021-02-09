@@ -85,7 +85,7 @@ class CatalogQuery():
         # check for healpix and sphere2d support
         self.check_healpix()
         self.check_sphere2d()
-        self.guess_coord_keys()
+        self.guess_coord_keys(ra_key, dec_key)
         
         # check if query relevant keys are contained in the database
         important_keys  = [self.ra_key, self.dec_key]
@@ -95,6 +95,8 @@ class CatalogQuery():
             important_keys.append(self.s2d_key)
 
         test_doc = self.src_coll.find_one()
+        if self.has_2dsphere:
+            test_doc["_ra"], test_doc["_dec"] = test_doc[self.s2d_key]["coordinates"]
         for k in important_keys:
             if (not k is None) and (not k in test_doc.keys()):
                 raise KeyError("key %s not found among document fields: %s"%(k, ", ".join(test_doc.keys())))
@@ -113,18 +115,19 @@ class CatalogQuery():
         self.autoset_method()
 
 
-    def guess_coord_keys(self, ra_key=None, dec_key=None):
+    def guess_coord_keys(self, ra_key, dec_key):
         doc = self.cat_db["meta"].find_one({"_id": "keys"})
         if doc:
             self.ra_key = ra_key or doc["ra"]
             self.dec_key = dec_key or doc["dec"]
         else:
-            self.ra_key = ra_key
-            self.dec_key = dec_key
-        if self.ra_key is None:
-            raise ValueError("ra_key not found in metadata or provided as kwarg")
-        if self.dec_key is None:
-            raise ValueError("dec_key not found in metadata or provided as kwarg")
+            self.ra_key = ra_key or "_ra"
+            self.dec_key = dec_key or "_dec"
+        if not self.has_2dsphere:
+            if ra_key is None:
+                raise ValueError("ra_key not found in metadata or provided as kwarg")
+            if dec_key is None:
+                raise ValueError("dec_key not found in metadata or provided as kwarg")
 
 
     def check_healpix(self):
@@ -174,6 +177,7 @@ class CatalogQuery():
         if len(sphere2d_doc) == 0:
             self.has_2dsphere = False
             self.sphere2d_index = False
+            self.s2d_key = None
             self.logger.debug("no 2d sphere key found in catalog %s"%self.cat_db.name)
         elif len(sphere2d_doc)==1 and sphere2d_doc[0]["is_indexed"]:
             # mongo collections can have at most one 2dsphere key indexed
@@ -258,9 +262,10 @@ class CatalogQuery():
             hp_key = self.hp_key, hp_order = self.hp_order, 
             hp_nest = self.hp_nest, hp_resol = self.hp_resol, 
             circular = circular, ra_key = self.ra_key, dec_key = self.dec_key,
+            sphere2d_key = self.s2d_key,
             find_one = find_one, pre_filter = qfunc_args.get('pre_filter'), 
             post_filter = qfunc_args.get('post_filter'), logger = self.logger,
-            projection = qfunc_args.get('projection', {'_id': 0, 'pos': 0}))
+            projection = qfunc_args.get('projection', {"_id": 0}))
 
 
     def findwithin_9HEALPix(self, ra, dec, find_one = False, **qfunc_args):
@@ -296,7 +301,7 @@ class CatalogQuery():
             ra = ra, dec = dec, src_coll = self.src_coll, hp_key = self.hp_key, 
             hp_order = self.hp_order, hp_nest = self.hp_nest, hp_resol = self.hp_resol, find_one = find_one, 
             pre_filter = qfunc_args.get('pre_filter'), post_filter = qfunc_args.get('post_filter'),
-            projection = qfunc_args.get('projection', {'_id': 0, 'pos': 0}))
+            projection = qfunc_args.get('projection', {}))
 
 
     def findwithin_2Dsphere(self, ra, dec, rs_arcsec, find_one = False, **qfunc_args):
@@ -341,7 +346,7 @@ class CatalogQuery():
             src_coll = self.src_coll, s2d_key = self.s2d_key, find_one = find_one, 
             logger = self.logger, pre_filter = qfunc_args.get('pre_filter'), 
             post_filter = qfunc_args.get('post_filter'),
-            projection = qfunc_args.get('projection', {'_id': 0, 'pos': 0}))
+            projection = qfunc_args.get('projection', {'_id': 0}))
 
 
     def findwithin_RAW(self, ra, dec, rs_arcsec, box_scale = 2., find_one = False, **qfunc_args):

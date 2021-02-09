@@ -98,7 +98,7 @@ def query_and_return(qfilter, projection, coll, find_one, to_table = True):
 
 def searcharound_HEALPix(
     ra, dec, rs_arcsec, src_coll, hp_key, hp_order, hp_nest, hp_resol, 
-    circular, ra_key, dec_key, find_one, pre_filter = None, post_filter = None, projection={"_id": 0}, logger  = None):
+    circular, ra_key, dec_key, find_one, sphere2d_key = None, pre_filter = None, post_filter = None, projection={"_id": 0}, logger  = None):
     """
         Returns sources in catalog contained in the the group of healpixels
         around the target coordinate that covers the search radius.
@@ -210,6 +210,9 @@ def searcharound_HEALPix(
         return Table(qresults)
     else:
         tab = Table(qresults)
+        if ra_key not in tab or dec_key not in tab and sphere2_key is not None:
+            ra_key, dec_key = "_ra", "_dec"
+            tab[ra_key], tab[dec_key] = zip(*(q[sphere2d_key]["coordinates"] for q in qresults))
         dists = get_distances(ra = ra, dec = dec, table = tab, ra_key = ra_key, dec_key = dec_key)
         circular_tab = tab[dists <= rs_arcsec]
         if len(circular_tab) == 0:
@@ -283,7 +286,7 @@ def searcharound_9HEALPix(ra, dec, src_coll, hp_key, hp_order, hp_nest, hp_resol
 
 
 def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one, 
-    pre_filter = None, post_filter = None, projection={"_id": 0, "pos": 0}, logger = None):
+    pre_filter = None, post_filter = None, projection={"_id": 0}, logger = None):
     """
         Returns sources in catalog within rs_arcsec from target position.
         
@@ -350,7 +353,11 @@ def searcharound_2Dsphere(ra, dec, rs_arcsec, src_coll, s2d_key, find_one,
     combined_filter = filters_logical_and(pre_filter, geoquery, post_filter)
 
     # query and return
-    return query_and_return(combined_filter, projection, src_coll, find_one)
+    tab = query_and_return(combined_filter, projection, src_coll, find_one)
+    if tab is not None:
+        ra_key, dec_key = "_ra", "_dec"
+        tab[ra_key], tab[dec_key] = zip(*(q[s2d_key]["coordinates"] for q in tab))
+    return tab
 
 
 def searcharound_RAW(ra, dec, rs_arcsec, src_coll, ra_key, dec_key, find_one, box_scale = 2, pre_filter = None, post_filter = None, projection={"_id": 0, "pos": 0}):
