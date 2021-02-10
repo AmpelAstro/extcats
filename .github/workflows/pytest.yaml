@@ -22,7 +22,7 @@ jobs:
         pip install -e .[testing]
     - name: Test with pytest
       run: |
-        pytest -rxs --coverage
+        pytest
     - name: Coveralls
       uses: AndreMiras/coveralls-python-action@v20201129
       with:
