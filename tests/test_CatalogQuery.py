@@ -9,13 +9,7 @@ def catq(milliquas, mongo_client):
 
 with_index_methods = pytest.mark.parametrize(
     "method",
-    [
-        "2dsphere",
-        "healpix",
-        pytest.param(
-            "raw", marks=pytest.mark.xfail(reason="raw has likely never worked")
-        ),
-    ],
+    ["2dsphere", "healpix"],
 )
 
 
