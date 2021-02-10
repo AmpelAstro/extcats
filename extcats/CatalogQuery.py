@@ -69,17 +69,17 @@ class CatalogQuery():
         self.logger.debug("using mongo client at %s:%d"%(self.dbclient.address))
         
         # find database and collection
-        if not cat_name in self.dbclient.database_names():
+        if not cat_name in self.dbclient.list_database_names():
             raise KeyError("cannot find database %s in client."%(cat_name))
         self.cat_db = self.dbclient[cat_name]
-        if not coll_name in self.cat_db.collection_names():
+        if not coll_name in self.cat_db.list_collection_names():
             raise KeyError("cannot find collection %s in database %s"%(coll_name, self.cat_db.name))
         self.src_coll = self.cat_db[coll_name]
         self.logger.info("connected to collection %s of database %s. %s documents in source collection %s."%
-            (coll_name, self.cat_db.name, self.src_coll.count(), coll_name))
+            (coll_name, self.cat_db.name, self.src_coll.count_documents({}), coll_name))
         
         # read metadata for the catalog
-        if not "meta" in self.cat_db.collection_names():
+        if not "meta" in self.cat_db.list_collection_names():
             raise KeyError("cannot find metadata collection in database %s"%self.cat_db.name)
         
         # check for healpix and sphere2d support

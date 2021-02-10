@@ -210,7 +210,8 @@ def searcharound_HEALPix(
         return Table(qresults)
     else:
         tab = Table(qresults)
-        if ra_key not in tab or dec_key not in tab and sphere2d_key is not None:
+        cols = set(tab.keys())
+        if (ra_key not in cols or dec_key not in cols) and sphere2d_key is not None:
             ra_key, dec_key = "_ra", "_dec"
             tab[ra_key], tab[dec_key] = zip(*(q[sphere2d_key]["coordinates"] for q in qresults))
         dists = get_distances(ra = ra, dec = dec, table = tab, ra_key = ra_key, dec_key = dec_key)
