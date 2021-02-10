@@ -2,6 +2,9 @@
 extcats
 *******
 
+.. image:: https://coveralls.io/repos/github/AmpelProject/extcats/badge.svg?branch=master
+:target: https://coveralls.io/github/AmpelProject/extcats?branch=master
+
 tools to organize and query astronomical catalogs
 #################################################
 

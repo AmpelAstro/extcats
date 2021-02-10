@@ -17,5 +17,5 @@ setup(
     url="https://github.com/AmpelProject/extcats",
     download_url="https://github.com/AmpelProject/extcats/archive/2.4.tar.gz",
     install_requires=["pymongo>=3.7", "healpy", "astropy", "pandas", "tqdm"],
-    extras_require={"testing": ["pytest"]},
+    extras_require={"testing": ["pytest", "pytest-cov"]},
 )
