@@ -252,8 +252,9 @@ class CatalogPusher():
         if not hasattr(self, "dict_modifier"):
             raise AttributeError(
             "no dict_modifier has been defined for this object. Use assign_dict_modifier first.")
-        self.logger.info("inserting %s in collection %s."%
-            (raw_file, ".".join([db_coll.database.name, db_coll.name])))
+        if not dry:
+            self.logger.info("inserting %s in collection %s."%
+                (raw_file, ".".join([db_coll.database.name, db_coll.name])))
 
         # read raw file, convert into documents, and insert to DB.
         def convert_and_push(data, dry=dry, fillna_val=fillna_val, ordered=ordered):
@@ -354,42 +355,45 @@ class CatalogPusher():
         """
 
         # connect to databse and collection
-        if dbclient is None:
-            dbclient = pymongo.MongoClient()
-        self.dbclient = dbclient
-        self.logger.info("using mongo client at %s:%d"%(self.dbclient.address))
+        if not dry:
+            if dbclient is None:
+                dbclient = pymongo.MongoClient()
+            self.dbclient = dbclient
+            self.logger.info("using mongo client at %s:%d"%(self.dbclient.address))
 
-        if dbname is None:
-            dbname = self.cat_name
-        db = dbclient[dbname]
-        self.dbname = dbname
-        self.db = db
-        self.logger.info("connecting to database %s. Here some stats:"%(db.name))
-        self.logger.info(json.dumps(db.command("dbstats"), indent=2))
+            if dbname is None:
+                dbname = self.cat_name
+            db = dbclient[dbname]
+            self.dbname = dbname
+            self.db = db
+            self.logger.info("connecting to database %s. Here some stats:"%(db.name))
+            self.logger.info(json.dumps(db.command("dbstats"), indent=2))
 
-        if coll_name in db.collection_names() and overwrite_coll:
-            self.logger.warning("overwrite_coll asserted: collection %s will be dropped."%coll_name)
-            db.drop_collection(coll_name)
-        coll = db[coll_name]
-        self.coll = coll
-        self.coll_name = coll_name
-        if coll_name in db.collection_names() and (not append_to_coll):
-            self.logger.warning("collection %s already exists and append_to_coll is False. Nothing to do."%coll_name)
-            return
+            if coll_name in db.list_collection_names() and overwrite_coll:
+                self.logger.warning("overwrite_coll asserted: collection %s will be dropped."%coll_name)
+                db.drop_collection(coll_name)
+            coll = db[coll_name]
+            self.coll = coll
+            self.coll_name = coll_name
+            if coll_name in db.list_collection_names() and (not append_to_coll):
+                self.logger.warning("collection %s already exists and append_to_coll is False. Nothing to do."%coll_name)
+                return
 
-        # create the indexes
-        if not index_on is None:
-            if type(index_on) == str:
-                index_list = [index_on]
-            elif type(index_on) == list:
-                index_list = index_on
-            for i_ind, index in enumerate(index_list):
-                if index_args is None:
-                    coll.create_index(index)
-                else:
-                    coll.create_index(index, **index_args[i_ind])
-        self.logger.info("collection has the following indexes: %s"%
-            ", ".join(coll.index_information().keys()))
+            # create the indexes
+            if not index_on is None:
+                if type(index_on) == str:
+                    index_list = [index_on]
+                elif type(index_on) == list:
+                    index_list = index_on
+                for i_ind, index in enumerate(index_list):
+                    if index_args is None:
+                        coll.create_index(index)
+                    else:
+                        coll.create_index(index, **index_args[i_ind])
+            self.logger.info("collection has the following indexes: %s"%
+                ", ".join(coll.index_information().keys()))
+        else:
+            coll = None
 
         # push the files into the database, either all of them, or some with
         # specified index range.
@@ -522,15 +526,17 @@ class CatalogPusher():
         """
 
         self.logger.info("adding metadata for HEALPix key named: %s"%healpix_id_key)
-        self.db['meta'].update(
+        self.db['meta'].update_one(
             {'_id': healpix_id_key},
             {
-              '_id' : healpix_id_key,
-              'key' : healpix_id_key,
-              'order' : order,
-              'nest': nest,
-              'is_indexed': is_indexed,
-              'type': 'healpix'
+                '$set': {
+                    '_id' : healpix_id_key,
+                    'key' : healpix_id_key,
+                    'order' : order,
+                    'nest': nest,
+                    'is_indexed': is_indexed,
+                    'type': 'healpix'
+                }
              },
              upsert = True)
 
@@ -561,14 +567,16 @@ class CatalogPusher():
         """
 
         self.logger.info("adding metadata for 2dsphere coordinates named: %s"%sphere2d_key)
-        self.db['meta'].update(
+        self.db['meta'].update_one(
             {'_id': sphere2d_key},
             {
-              '_id' : sphere2d_key,
-              'key' : sphere2d_key,
-              'is_indexed': is_indexed,
-              'pos_format': pos_format,
-              'type': 'sphere2d'
+                '$set': {
+                    '_id' : sphere2d_key,
+                    'key' : sphere2d_key,
+                    'is_indexed': is_indexed,
+                    'pos_format': pos_format,
+                    'type': 'sphere2d'
+                }
             },
              upsert = True)
 
@@ -591,14 +599,16 @@ class CatalogPusher():
         """
 
         self.logger.info("adding science related metadata to database.")
-        self.db['meta'].update(
+        self.db['meta'].update_one(
             {'_id': 'science'},
             {
-              '_id' : 'science',
-              'contact': contact,
-              'email': email,
-              'description': description,
-              'ref': reference,
+                '$set': {
+                    '_id' : 'science',
+                    'contact': contact,
+                    'email': email,
+                    'description': description,
+                    'ref': reference,
+                }
             },
             upsert = True)
 

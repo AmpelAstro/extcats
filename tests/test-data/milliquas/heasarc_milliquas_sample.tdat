@@ -1,0 +1,101 @@
+<HEADER>
+#
+#         TABLE: heasarc_milliquas
+#      LOCATION: dbms1.gsfc.nasa.gov:heasarcprod
+#    TOTAL ROWS: 1445913
+#
+# CREATION DATE: 2020-10-02 16:23:54
+# LAST MODIFIED: 2020-10-02 16:23:54
+#   EXGEST DATE: 2020-10-05 19:21:08
+#
+table_name = heasarc_milliquas
+table_description = "Million Quasars Catalog (MILLIQUAS), Version 7.0 (30 September 2020)"
+table_document_url = http://heasarc.gsfc.nasa.gov/W3Browse/galaxy-catalog/milliquas.html
+table_security = public
+#
+# Table Parameters
+#
+field[name] = char25  [meta.id;meta.main] (index) // Source Identification from the Literature
+field[ra] = float8:.5f_degree [pos.eq.ra;meta.main] (key) // Right Ascension
+field[dec] = float8:.5f_degree [pos.eq.dec;meta.main] (key) // Declination
+field[lii] = float8:.5f_degree [pos.galactic.lon] (index) // Galactic Longitude
+field[bii] = float8:.5f_degree [pos.galactic.lat] (index) // Galactic Latitude
+field[broad_type] = char4  [src.class] (index) // Broad Classification of Object
+field[rmag] = float8:5.2f_mag [phot.mag;em.opt.R] (index) // Red Optical Magnitude
+field[bmag] = float8:5.2f_mag [phot.mag;em.opt.B] (index) // Blue Optical Magnitude
+field[optical_flag] = char3  [meta.code;em.opt] (index) // Flags Indicate Comments on Optical Object
+field[red_psf_flag] = char1  [meta.code;instr.det.psf]  // Flag Indicates Red Optical PSF Class
+field[blue_psf_flag] = char1  [meta.code;instr.det.psf]  // Flag Indicates Blue Optical PSF Class
+field[redshift] = float8:6.3f  [src.redshift] (index) // Redshift from the Literature or Estimated
+field[ref_name] = char6  [meta.ref;meta.id] (index) // Reference Code for the Source Identification from the Literature
+field[ref_redshift] = char6  [meta.ref;src.redshift] (index) // Reference Code for the Redshift from the Literature
+field[qso_prob] = int2:3d_percent [stat.probability] (index) // Probability That This Object Is a QSO
+field[radio_name] = char22  [meta.id.assoc;em.radio] (index) // Radio Identification, If Any
+field[xray_name] = char22  [meta.id.assoc;em.X-ray] (index) // X-Ray Identification, If Any, But Can Be Radio Lobe If Radio Source
+field[alt_name_1] = char22  [meta.id.assoc;em.radio] (index) // Radio Lobe Identification or Additional Radio or X-Ray Identification
+field[alt_name_2] = char22  [meta.id.assoc;em.radio] (index) // Additional Radio Lobe Identification or X-Ray Identification
+field[class] = int2  [src.class] (index) // Browse Object Classification
+#
+parameter_defaults = name ra dec bmag rmag redshift radio_name xray_name
+#
+# Virtual Parameters
+#
+catalog_bibcode = 2015PASA...32...10F
+declination = @dec
+default_search_radius = 1
+equinox = 2000
+frequency_regime = Optical
+observatory_name = GALAXY CATALOG
+right_ascension = @ra
+row_type = Survey Source
+table_author = Flesch
+table_info_url = http://quasars.org/milliquas.htm
+table_priority = 5
+table_type = Object
+target_name = @name
+unique_key = name
+#
+# Relationship Definitions
+#
+relate[class] = heasarc_class(class_id)
+#
+# Data Format Specification
+#
+line[1] = name ra dec lii bii broad_type rmag bmag optical_flag red_psf_flag blue_psf_flag redshift ref_name ref_redshift qso_prob radio_name xray_name alt_name_1 alt_name_2 class
+#
+<DATA>
+WISEA J043431.62-894617.9|68.6369186|-89.7716355|302.71950796|-27.25652568|q|19.2|19.34|jG|-|-|1.7|WISEA|MQ|100|||||7204|
+WISEA J094017.96-894442.8|145.0760539|-89.7452383|302.72023987|-26.95690938|q|18.58|19.27|jG|-|n|1|WISEA|MQ|96|||||7204|
+WISEA J192247.55-893602.5|290.6981431|-89.600695|303.37660399|-27.1820097|q|20.25|21.13|j|1|-|1.6|WISEA|MQ|98|||||7204|
+WISEA J174333.00-893514.8|265.8887235|-89.5874561|303.37479344|-27.00714205|q|19.07|18.68|jmG|1|-|0.6|WISEA|MQ|98|||||7204|
+WISEA J214955.49-893435.5|327.4812657|-89.5765297|303.2714897|-27.4252982|q|18.67|19.85|jG|-|1|2.4|WISEA|MQ|95|||||7204|
+WISEA J094526.46-893159.0|146.3563831|-89.5330643|302.55241599|-26.80634261|q|19.8|20.19|jG|1|n|0.8|WISEA|MQ|91|||||7204|
+WISEA J212638.23-892859.5|321.6626118|-89.4832061|303.3857575|-27.4513683|q|19.88|21.05|jG|n|1||WISEA||84|||||7204|
+WISEA J045305.39-892601.5|73.271934|-89.4337761|302.37727662|-27.40673577|q|19.08|20.23|jG|-|1|0.3|WISEA|MQ|94|||||7204|
+WISEA J174350.23-892550.8|265.9589389|-89.4307816|303.54296773|-26.96145129|q|17.7|18.61|jG|-|-|2.1|WISEA|MQ|99|||||7204|
+WISEA J005023.03-892532.2|12.5964651|-89.4256068|302.9348962|-27.70263837|q|18.93|19.9|jG|-|-|1|WISEA|MQ|100|||||7204|
+WISEA J222301.23-892309.1|335.7540586|-89.3858719|303.35004827|-27.61741504|qX|17.26|17.57|jG|-|-|0.9|WISEA|MQ|100||2SXPS J222300.2-892309|||7204|
+WISEA J161901.50-892201.9|244.756825|-89.3672057|303.48947805|-26.73667152|q|20.09|21.06|jG|-|n|0.6|WISEA|MQ|95|||||7204|
+WISEA J180334.09-892201.6|270.8907935|-89.3670879|303.6267839|-26.99529038|q|20.08|20.82|jG|1|1|1.3|WISEA|MQ|100|||||7204|
+WISEA J095358.71-892139.7|148.496477|-89.3610872|302.43200264|-26.67059292|q|19.43|20.27|jG|n|-|1.5|WISEA|MQ|100|||||7204|
+WISEA J015835.73-892019.8|29.6484489|-89.3388774|302.71611948|-27.76102843|q|19.03|20.05|jG|1|-|0.3|WISEA|MQ|96|||||7204|
+WISEA J044013.91-891855.0|70.0588381|-89.315292|302.28308167|-27.49767745|q|19.46|20.74|jG|-|-|0.2|WISEA|MQ|90|||||7204|
+WISEA J225659.24-891826.1|344.2463408|-89.3072793|303.3067149|-27.735874|q|16.95|17.54|jG|n|1|0.1|WISEA|MQ|99|||||7204|
+WISEA J014318.28-891742.3|25.8175424|-89.295084|302.75320409|-27.81510291|q|17.53|19.03|jG|1|-|1.8|WISEA|MQ|88|||||7204|
+WISEA J143939.75-891725.3|219.9174586|-89.2903414|303.29261502|-26.49580714|q|19.34|20.07|jG|1|-|0.3|WISEA|MQ|98|||||7204|
+WISEA J171637.43-891552.4|259.1555297|-89.264386|303.68673198|-26.83051014|q|19.55|20.71|jG|-|-|1.7|WISEA|MQ|98|||||7204|
+WISEA J153947.23-891549.4|234.9496029|-89.2636885|303.48379132|-26.5807637|q|19.04|19.33|jG|-|-|0.8|WISEA|MQ|99|||||7204|
+WISEA J133527.43-891437.1|203.86557|-89.2436532|303.0931026|-26.38572419|q|19.09|19.29|jG|1|1|0.6|WISEA|MQ|98|||||7204|
+WISEA J122148.50-891431.2|185.452993|-89.2419933|302.82285359|-26.37652689|q|18.95|18.78|jG|-|1|1.7|WISEA|MQ|100|||||7204|
+WISEA J232334.06-891159.3|350.8956605|-89.1998582|303.27044538|-27.8699124|q|20.27|20.65|jG|n|1|1.1|WISEA|MQ|100|||||7204|
+WISEA J213247.49-891140.5|323.1981326|-89.1945869|303.62495853|-27.64789545|q|19.77|20.71|jG|-|-|2.2|WISEA|MQ|98|||||7204|
+WISEA J070143.81-891039.1|105.439846|-89.1774848|302.00899051|-27.08820476|q|19.32|19.6|jG|-|1|1.1|WISEA|MQ|99|||||7204|
+WISEA J161013.42-891012.2|242.5543061|-89.1700216|303.63972242|-26.58960072|q|20.77|19.8|jG|-|1|2|WISEA|MQ|80|||||7204|
+WISEA J022901.56-890908.3|37.2577281|-89.1522868|302.53570504|-27.89970361|q|20.36|20.86|jG|-|n|0.3|WISEA|MQ|97|||||7204|
+WISEA J203030.53-890841.6|307.6294375|-89.1450047|303.80701488|-27.48375948|q|19.96|20.88|jG|-|-|0.4|WISEA|MQ|97|||||7204|
+WISEA J224917.93-890819.0|342.3240278|-89.1386416|303.42695484|-27.86928279|q|19.82|20.87|jmG|-|-|1.4|WISEA|MQ|99|||||7204|
+WISEA J231320.96-890753.7|348.3456884|-89.1316188|303.3396625|-27.91776797|q|19.88|21.12|jG|-|1|1.4|WISEA|MQ|88|||||7204|
+WISEA J012938.55-890710.9|22.4108824|-89.1197826|302.76651102|-27.99616924|q|19.28|19.25|jG|1|-|0.8|WISEA|MQ|99|||||7204|
+WISEA J032900.52-890704.0|52.2496419|-89.1178183|302.2990035|-27.80861798|q|17.7|18.83|jG|n|1|0.1|WISEA|MQ|89|||||7204|
+WISEA J072941.57-890703.0|112.4232528|-89.1175408|301.95545646|-26.97825934|q|18.34|19.44|jmG|-|-|1.4|WISEA|MQ|98|||||7204|
+<END>
