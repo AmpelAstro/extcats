@@ -68,20 +68,16 @@ more efficient into moderating RAM usage.
 Installation:
 ^^^^^^^^^^^^^
 
-The preferred way to install the package is to download the tar 
-from this Github, unpack it to your favourite place, and then run:
+The easiest way to install the Python library is with pip:
 ::
-
-    python setup.py install
-
-This will also download some test data to run the example notebooks.
-
-Alternatively, the pure python module (without notebooks examples
-or test data) is installable via pip:
-::
-
+    
     pip install extcats
 
+If you want do modify `extcats` itself, you'll need an editable installation.
+After cloning this Git repository:
+::
+   
+    poetry install
 
 Usefull links:
 --------------
