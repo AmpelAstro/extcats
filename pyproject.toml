@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "extcats"
-version = "2.5.0-alpha.0"
+version = "2.4.0"
 description = "Tools to organize and query astronomical catalogs"
 authors = ["Matteo Giomi <matteo.giomi@desy.de>"]
 maintainers = ["Jakob van Santen <jakob.van.santen@desy.de>"]
