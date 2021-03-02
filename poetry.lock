@@ -154,7 +154,7 @@ name = "pandas"
 version = "1.2.3"
 description = "Powerful data structures for data analysis, time series, and statistics"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7.1"
 
 [package.dependencies]
@@ -289,7 +289,7 @@ name = "pytz"
 version = "2021.1"
 description = "World timezone definitions, modern and historical"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [[package]]
@@ -351,10 +351,13 @@ python-versions = ">=3.6"
 docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
+[extras]
+ingest = ["tqdm", "pandas"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "c671959ede453dac0986cad69842737ddca4e9feaa7e1804e5dd4336e7b254f7"
+content-hash = "865b41c79df6a9ab9f825fcc8e4935a29eb01c0ba2dcf9ce2b0d878cc92f9935"
 
 [metadata.files]
 astropy = [
