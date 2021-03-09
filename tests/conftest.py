@@ -120,7 +120,7 @@ def milliquas(data_dir, mongo_client):
         dbclient=mongo_client,
     )
 
-    assert mqp.coll.count_documents({}) == 34
+    assert mqp.coll.estimated_document_count() == 34
 
     mqp.healpix_meta(healpix_id_key="hpxid_16", order=16, is_indexed=True, nest=True)
     mqp.sphere2d_meta(sphere2d_key="pos", is_indexed=True, pos_format="geoJSON")

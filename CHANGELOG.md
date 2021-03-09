@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2020-03-09
+### Changed
+- Use Collection.estimated_document_count() (which is a metadata query) instead
+  of Collection.count_documents() (which is a full collection scan) in
+  CatalogQuery ctor. The latter can be quite slow for large catalogs.
+
 ## [2.4.0] - 2020-03-02
 ### Added
 - Experimental support for searches against LIGO-style GW contours

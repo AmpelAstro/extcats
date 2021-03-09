@@ -76,7 +76,7 @@ class CatalogQuery():
             raise KeyError("cannot find collection %s in database %s"%(coll_name, self.cat_db.name))
         self.src_coll = self.cat_db[coll_name]
         self.logger.info("connected to collection %s of database %s. %s documents in source collection %s."%
-            (coll_name, self.cat_db.name, self.src_coll.count_documents({}), coll_name))
+            (coll_name, self.cat_db.name, self.src_coll.estimated_document_count(), coll_name))
         
         # read metadata for the catalog
         if not "meta" in self.cat_db.list_collection_names():
