@@ -124,9 +124,9 @@ class CatalogQuery():
             self.ra_key = ra_key or "_ra"
             self.dec_key = dec_key or "_dec"
         if not self.has_2dsphere:
-            if ra_key is None:
+            if self.ra_key is None:
                 raise ValueError("ra_key not found in metadata or provided as kwarg")
-            if dec_key is None:
+            if self.dec_key is None:
                 raise ValueError("dec_key not found in metadata or provided as kwarg")
 
 
