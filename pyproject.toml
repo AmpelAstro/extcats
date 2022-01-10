@@ -9,7 +9,7 @@ readme = "README.rst"
 repository = "https://github.com/AmpelProject/extcats"
 
 [tool.poetry.dependencies]
-python = "^3.7.1"
+python = ">=3.8,<4.0"
 pymongo = ">=3.7,<5.0"
 healpy = "^1.14.0"
 astropy = ">=4.2,<6"
