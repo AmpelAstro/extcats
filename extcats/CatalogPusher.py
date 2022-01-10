@@ -359,7 +359,7 @@ class CatalogPusher():
             if dbclient is None:
                 dbclient = pymongo.MongoClient()
             self.dbclient = dbclient
-            self.logger.info("using mongo client at %s:%d"%(self.dbclient.address))
+            self.logger.info(f"using mongo client at {self.dbclient.address}")
 
             if dbname is None:
                 dbname = self.cat_name
