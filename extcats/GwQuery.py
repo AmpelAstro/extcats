@@ -44,7 +44,7 @@ class GwQuery():
         
         # connect to mongo client
         self.dbclient = pymongo.MongoClient() if dbclient is None else dbclient
-        self.logger.debug("using mongo client at %s:%d"%(self.dbclient.address))
+        self.logger.debug(f"using mongo client at {self.dbclient.address}")
         
         # find database and collection
         if not db_name in self.dbclient.database_names():

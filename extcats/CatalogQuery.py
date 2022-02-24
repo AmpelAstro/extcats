@@ -66,7 +66,7 @@ class CatalogQuery():
         self.dbclient = dbclient
         if dbclient is None:
             self.dbclient = pymongo.MongoClient()
-        self.logger.debug("using mongo client at %s:%d"%(self.dbclient.address))
+        self.logger.debug(f"using mongo client at {self.dbclient.address}")
         
         # find database and collection
         if not cat_name in self.dbclient.list_database_names():

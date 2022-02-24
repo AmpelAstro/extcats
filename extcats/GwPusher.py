@@ -175,7 +175,7 @@ class GwPusher():
         # be nice and informative
         self.logger.info("connected to collection %s of database %s"%
             (self.dbname, self.coll_name))
-        self.logger.debug("using mongo client at %s:%d"%(self.dbclient.address))
+        self.logger.debug(f"using mongo client at {self.dbclient.address}")
         self.logger.debug("database stats: %s"%json.dumps(self.db.command("dbstats"), indent=2))
 
 
