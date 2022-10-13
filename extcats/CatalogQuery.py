@@ -156,7 +156,7 @@ class CatalogQuery():
         if not hp_doc is None:
             self.has_hp = True
             self.hp_key, self.hp_order, self.hp_nest, self.hp_index = (
-                hp_doc['key'], hp_doc['order'], hp_doc['nest'], hp_doc['is_indexed'] )
+                hp_doc['key'], int(hp_doc['order']), hp_doc['nest'], hp_doc['is_indexed'] )
             self.hp_resol = nside2resol(2**self.hp_order, arcmin = True) * 60.
             self.logger.info("set HEALPIX partition of order %d with key '%s'. Nested: %s, Indexed: %s, Resolution [\"]: %.3f"%(
                 self.hp_order, self.hp_key, str(self.hp_nest), str(self.hp_index), self.hp_resol))
