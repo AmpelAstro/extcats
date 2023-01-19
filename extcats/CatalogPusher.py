@@ -311,8 +311,8 @@ class CatalogPusher:
         # now read, parse, and fill.
         tot_docs, start = 0, time.time()
         if self.file_reader == astropy.table.table.Table:
-            hdul = astropy.io.fits.open(raw_file)
-            raw_file = astropy.table.Table(hdul[tableindex].data)
+            with astropy.io.fits.open(raw_file) as hdul:
+                raw_file = astropy.table.Table(hdul[tableindex].data)
         if not self.file_reader_inchunks:
             data = self.file_reader(raw_file, **self.file_reader_args)
             tot_docs += convert_and_push(data)
