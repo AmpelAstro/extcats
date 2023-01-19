@@ -1,27 +1,22 @@
-*******
-extcats
-*******
 
-.. image:: https://coveralls.io/repos/github/AmpelProject/extcats/badge.svg?branch=master
-   :target: https://coveralls.io/github/AmpelProject/extcats?branch=master
+[![Coverage Status](https://coveralls.io/repos/github/AmpelAstro/extcats/badge.svg?branch=main)](https://coveralls.io/repos/github/AmpelAstro/extcats?branch=main)
+
+# extcats
 
 Organize and query astronomical catalogs
-########################################
-
 
 This modules provides classes to import astronomical catalogs into 
 a **mongodb** database, and to efficiently query this database for 
 positional matches.
 
 
-Description:
-############
+## Description:
 
 The two main classes of this module are:
 
-    - **CatalogPusher**: will process the raw files with the catalog sources and creates a database. See *insert_example* notebook for more details and usage instruction.
+- **CatalogPusher**: will process the raw files with the catalog sources and creates a database. See *insert_example* notebook for more details and usage instruction.
     
-    - **CatalogQuery**: will perform queries on the catalogs. See *query_example* for examples and benchmarking.
+- **CatalogQuery**: will perform queries on the catalogs. See *query_example* for examples and benchmarking.
 
 Supported queries includes:
 
@@ -33,14 +28,12 @@ Supported queries includes:
 The first item on the above list (cone search around target) provides the basic block for the other two types of positional-based queries. The code supports tree types of basic
 cone-search queries, depending on the indexing strategy of the database.
 
-    - using **HEALPix**: if the catalog sources have been assigned an HEALPix index (using `healpy <https://healpy.readthedocs.io/en/latest/#>`_).
-     
-    - using **GeoJSON** (or 'legacy coordinates'): if the catalog documents have the 
+- using **HEALPix**: if the catalog sources have been assigned an HEALPix index (using `healpy <https://healpy.readthedocs.io/en/latest/#>`_).
+- using **GeoJSON** (or 'legacy coordinates'): if the catalog documents have the 
       position arranged in one of these two formats (`example 
       <https://docs.mongodb.com/manual/geospatial-queries/>`_), the query is based on
       the ``$geoWithin`` and ``$centerSphere`` mongo operators.
-    
-    - **raw**: this method uses the ``$where`` keyword to evaluate on each document a ``javascript``
+- **raw**: this method uses the ``$where`` keyword to evaluate on each document a ``javascript``
       function computing the angular distance between each source and the target. This method 
       does not require any additional field to be added to the catalog but has, in general, 
       poorer performances with respect to the methods above.
@@ -49,8 +42,7 @@ All the core functions are defined in the ``catquery_utils`` module. In all case
 results of the queries will be return an ``astropy.table.Table`` objects.
 
 
-Notes on indexing and query performances:
------------------------------------------
+## Notes on indexing and query performances:
 
 The recommended method to index and query catalogs is based on the GeoJSON coorinate type.
 See the *example_insert* notebook for how this can be implemented. 
@@ -65,23 +57,19 @@ coordinates might not be feasible. In this case, the HEALPix based indexing shou
 be used. As (possibly) many sources shares the same HEALPix index, compression is 
 more efficient into moderating RAM usage.
 
-Installation:
-^^^^^^^^^^^^^
-
+# Installation:
 The easiest way to install the Python library is with pip:
-::
     
     pip install extcats
 
 If you want do modify `extcats` itself, you'll need an editable installation.
 After cloning this Git repository:
-::
    
     poetry install
 
-Usefull links:
---------------
+# Useful links:
+[mongodb installation](https://docs.mongodb.com/manual/administration/install-community/)
 
- - `mongodb installation <https://docs.mongodb.com/manual/administration/install-community/>`_
- - `healpy <https://healpy.readthedocs.io/en/latest/#>`_
- - `astropy <http://www.astropy.org/>`_
+[healpy](https://healpy.readthedocs.io/en/latest)
+
+[astropy](https://www.astropy.org)

@@ -5,7 +5,7 @@ description = "Tools to organize and query astronomical catalogs"
 authors = ["Matteo Giomi <matteo.giomi@desy.de>"]
 maintainers = ["Jakob van Santen <jakob.van.santen@desy.de>"]
 license = "MIT"
-readme = "README.rst"
+readme = "README.md"
 repository = "https://github.com/AmpelProject/extcats"
 
 [tool.poetry.dependencies]
