@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# class to insert static esternal catalogs into a mongodb.
-#
-# Author: M. Giomi (matteo.giomi@desy.de)
+# File              : ampel/nuclear/t2/T2SimpleMetrics.py
+# License           : BSD-3-Clause
+# Author            : Matteo Giomi
+# Date              : ?
+# Last Modified Date: 19.01.2023
+# Last Modified By  : simeon.reusch@desy.de
 
 import os, glob, time, json, pymongo
 import pandas as pd
+import astropy
 import numpy as np
 from inspect import getsourcelines
 
@@ -228,7 +231,9 @@ class CatalogPusher:
             % (self.dict_modifier.__name__)
         )
 
-    def insert_file_todb(self, raw_file, db_coll, dry, fillna_val, ordered):
+    def insert_file_todb(
+        self, raw_file, db_coll, dry, fillna_val, ordered, tableindex=1
+    ):
         """
         parse a raw file into a list of dictionaries that can be inserted in
         the database, and apply the dict modifier to each element.
@@ -305,6 +310,9 @@ class CatalogPusher:
 
         # now read, parse, and fill.
         tot_docs, start = 0, time.time()
+        if self.file_reader == astropy.table.table.Table:
+            hdul = astropy.io.fits.open(raw_file)
+            raw_file = astropy.table.Table(hdul[tableindex].data)
         if not self.file_reader_inchunks:
             data = self.file_reader(raw_file, **self.file_reader_args)
             tot_docs += convert_and_push(data)
@@ -335,6 +343,7 @@ class CatalogPusher:
         dry=False,
         filerange=None,
         fillna_val=None,
+        tableindex=1,
     ):
         """
         insert all the files into the specified database.
@@ -442,7 +451,9 @@ class CatalogPusher:
         if (not filerange is None) and len(self.raw_files) > 1:
             files = self.raw_files[filerange[0] : filerange[1]]
         for rawf in files:
-            self.insert_file_todb(rawf, coll, dry, fillna_val, ordered)
+            self.insert_file_todb(
+                rawf, coll, dry, fillna_val, ordered, tableindex=tableindex
+            )
         end = time.time()
         self.logger.info(
             "done inserting catalog %s in collection %s.%s. Took %.2e seconds"
