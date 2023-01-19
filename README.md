@@ -68,7 +68,8 @@ After cloning this Git repository:
     poetry install
 
 # Useful links:
+[mongodb installation](https://docs.mongodb.com/manual/administration/install-community/)
 
- - `mongodb installation <https://docs.mongodb.com/manual/administration/install-community/>`_
- - `healpy <https://healpy.readthedocs.io/en/latest/#>`_
- - `astropy <http://www.astropy.org/>`_
+[healpy](https://healpy.readthedocs.io/en/latest)
+
+[astropy](https://www.astropy.org)
