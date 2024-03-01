@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - master
+      - renovate/*
+      - dev/*
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - master
+      - dev/*
+      - stable/*
+
+jobs:
+  ci:
+    uses: AmpelProject/Ampel-interface/.github/workflows/ci.yml@ci-py12-v3
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+    with:
+      mongo: false
+      lint: false
+      # renovate: datasource=conda depName=conda-forge/python
+      python-version: "3.12.2"
+      # renovate: datasource=pypi depName=ruff
+      ruff-version: "0.3.0"
