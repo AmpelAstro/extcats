@@ -48,10 +48,10 @@ class GwQuery:
         self.logger.debug(f"using mongo client at {self.dbclient.address}")
 
         # find database and collection
-        if not db_name in self.dbclient.database_names():
-            raise KeyError("cannot find database %s in client." % (cat_name))
+        if db_name not in self.dbclient.database_names():
+            raise KeyError("cannot find database %s in client." % (db_name))
         self.gw_db = self.dbclient[db_name]
-        if not coll_name in self.gw_db.collection_names():
+        if coll_name not in self.gw_db.collection_names():
             raise KeyError(
                 "cannot find collection %s in database %s"
                 % (coll_name, self.gw_db.name)
@@ -63,7 +63,7 @@ class GwQuery:
         )
 
         # read metadata for the catalog
-        if not "meta" in self.gw_db.collection_names():
+        if "meta" not in self.gw_db.collection_names():
             raise KeyError(
                 "cannot find metadata collection in database %s" % self.gw_db.name
             )

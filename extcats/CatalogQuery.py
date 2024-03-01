@@ -82,10 +82,10 @@ class CatalogQuery:
         self.logger.debug(f"using mongo client at {self.dbclient.address}")
 
         # find database and collection
-        if not cat_name in self.dbclient.list_database_names():
+        if cat_name not in self.dbclient.list_database_names():
             raise KeyError("cannot find database %s in client." % (cat_name))
         self.cat_db = self.dbclient[cat_name]
-        if not coll_name in self.cat_db.list_collection_names():
+        if coll_name not in self.cat_db.list_collection_names():
             raise KeyError(
                 "cannot find collection %s in database %s"
                 % (coll_name, self.cat_db.name)
@@ -102,7 +102,7 @@ class CatalogQuery:
         )
 
         # read metadata for the catalog
-        if not "meta" in self.cat_db.list_collection_names():
+        if "meta" not in self.cat_db.list_collection_names():
             raise KeyError(
                 "cannot find metadata collection in database %s" % self.cat_db.name
             )
@@ -123,7 +123,7 @@ class CatalogQuery:
         if self.has_2dsphere:
             test_doc["_ra"], test_doc["_dec"] = test_doc[self.s2d_key]["coordinates"]
         for k in important_keys:
-            if (not k is None) and (not k in test_doc.keys()):
+            if (k is not None) and (k not in test_doc.keys()):
                 raise KeyError(
                     "key %s not found among document fields: %s"
                     % (k, ", ".join(test_doc.keys()))
@@ -134,10 +134,10 @@ class CatalogQuery:
         self.logger.debug(
             "source collection has the following indexes: %s" % ", ".join(indexes)
         )
-        if self.has_2dsphere and (not self.s2d_key in indexes):
+        if self.has_2dsphere and (self.s2d_key not in indexes):
             self.logger.warning("2dsphere key %s is not indexed." % (self.s2d_key))
             self.sphere2d_index = False
-        if self.has_hp and (not self.hp_key in indexes):
+        if self.has_hp and (self.hp_key not in indexes):
             self.logger.warning("2dsphere key %s is not indexed." % (self.hp_key))
             self.hp_index = False
 
@@ -187,7 +187,7 @@ class CatalogQuery:
                     hp_doc = hpd
                     max_order = hpd["order"]
 
-        if not hp_doc is None:
+        if hp_doc is not None:
             self.has_hp = True
             self.hp_key, self.hp_order, self.hp_nest, self.hp_index = (
                 hp_doc["key"],
@@ -683,7 +683,8 @@ class CatalogQuery:
         """
 
         # method specific imports
-        import time, tqdm, astropy
+        import time
+        import tqdm
 
         # generate the random sample of points if none is given
         if points is None:

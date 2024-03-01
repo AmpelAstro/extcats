@@ -7,10 +7,12 @@
 # Last Modified Date: 19.01.2023
 # Last Modified By  : simeon.reusch@desy.de
 
-import os, glob, time, json, pymongo
-import pandas as pd
+import os
+import glob
+import time
+import json
+import pymongo
 import astropy
-import numpy as np
 from inspect import getsourcelines
 
 
@@ -90,9 +92,9 @@ class CatalogPusher:
 
         # find the raw files for this catalog. If a single string has been
         # passed, cast it into list so we treat the two cases the same way
-        if type(data_source) == str:
+        if isinstance(data_source, str):
             data_source = [data_source]
-        elif type(data_source) == list:
+        elif isinstance(data_source, list):
             pass
         else:
             raise OSError(
@@ -107,7 +109,7 @@ class CatalogPusher:
                 self.raw_files.append(path)
             elif os.path.isdir(path):
                 file_filter = "/**/*" * recursive + "/*" * (not recursive)
-                if not file_type is None:
+                if file_type is not None:
                     file_filter += file_type
                 files = glob.glob(path + file_filter, recursive=recursive)
                 self.raw_files.extend(files)
@@ -200,7 +202,7 @@ class CatalogPusher:
 
         # check if given keyword arguments are accepted by the function
         for rdr_arg in reader_args.keys():
-            if not rdr_arg in reader_func.__code__.co_varnames:
+            if rdr_arg not in reader_func.__code__.co_varnames:
                 self.logger.warning(
                     "argument %s not found among those accepted by %s"
                     % (rdr_arg, reader_func.__name__)
@@ -298,7 +300,7 @@ class CatalogPusher:
                 )
 
             # massage your dataframe and extract list od dictionaries
-            if not fillna_val is None:
+            if fillna_val is not None:
                 data_df.fillna(fillna_val, inplace=True, downcast=False)
             raw_docs = df_to_dictlist_force_types(data_df)
 
@@ -427,10 +429,10 @@ class CatalogPusher:
                 return
 
             # create the indexes
-            if not index_on is None:
-                if type(index_on) == str:
+            if index_on is not None:
+                if isinstance(index_on, str):
                     index_list = [index_on]
-                elif type(index_on) == list:
+                elif isinstance(index_on, list):
                     index_list = index_on
                 for i_ind, index in enumerate(index_list):
                     if index_args is None:
@@ -448,7 +450,7 @@ class CatalogPusher:
         # specified index range.
         start = time.time()
         files = self.raw_files
-        if (not filerange is None) and len(self.raw_files) > 1:
+        if (filerange is not None) and len(self.raw_files) > 1:
             files = self.raw_files[filerange[0] : filerange[1]]
         for rawf in files:
             self.insert_file_todb(
@@ -540,7 +542,7 @@ class CatalogPusher:
         start = time.time()
         for pp in tqdm.tqdm(points):
             buff = query_func(ra=pp[0], dec=pp[1], coll=self.coll)
-            if not buff is None:
+            if buff is not None:
                 tot_found += 1
         end = time.time()
         total = end - start

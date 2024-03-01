@@ -6,10 +6,10 @@
 # Author: M. Giomi (matteo.giomi@desy.de)
 
 
-import os, json, subprocess
+import json
+import subprocess
 import geojson
 import copy
-import numpy as np
 from astropy.io import fits
 from pymongo import MongoClient, GEOSPHERE
 
@@ -100,7 +100,7 @@ def to_poly(coords):
     if not pp.is_valid:
         raise ValueError(
             "cannot convert coordinates %s to valid geojson.Polygon. Errors: %s"
-            % (repr(my_coords), pp.errors())
+            % (repr(coords), pp.errors())
         )
     return pp
 

@@ -4,7 +4,6 @@ import pandas as pd
 from healpy import ang2pix
 import pymongo
 import pytest
-from extcats import testdata
 from extcats.CatalogPusher import CatalogPusher
 import subprocess
 import json

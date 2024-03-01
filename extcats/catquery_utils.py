@@ -14,7 +14,7 @@ from math import (
     sqrt,
 )  # when running on scalars, math is much faster than numpy
 from bson.code import Code
-from healpy import ang2pix, pix2ang, get_all_neighbours, nside2resol
+from healpy import ang2pix, pix2ang, get_all_neighbours
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
 
@@ -591,7 +591,7 @@ def random_point_sphere(npoints, rnd_seed=None):
     """
     import numpy as np
 
-    if not rnd_seed is None:
+    if rnd_seed is not None:
         np.random.seed(rnd_seed)
     points = np.zeros(2 * npoints).reshape(npoints, 2)
     phi = -np.pi + 2 * np.pi * np.random.ranf(npoints)
