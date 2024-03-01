@@ -633,7 +633,6 @@ class CatalogPusher:
             {"_id": sphere2d_key},
             {
                 "$set": {
-                    "_id": sphere2d_key,
                     "key": sphere2d_key,
                     "is_indexed": is_indexed,
                     "pos_format": pos_format,
@@ -665,11 +664,39 @@ class CatalogPusher:
             {"_id": "science"},
             {
                 "$set": {
-                    "_id": "science",
                     "contact": contact,
                     "email": email,
                     "description": description,
                     "ref": reference,
+                }
+            },
+            upsert=True,
+        )
+
+    def coord_meta(self, ra: str, dec: str):
+        """
+        Note which columns should be used as coordinates
+
+        Paramters:
+        ----------
+
+            ra: `str`
+                name of right ascension column
+
+            dec: `str`
+                name of dec column
+
+            refernce: `str`
+                publication, web address documenting the catalog.
+        """
+
+        self.logger.info("adding coordinate related metadata to database.")
+        self.db["meta"].update_one(
+            {"_id": "keys"},
+            {
+                "$set": {
+                    "ra": ra,
+                    "dec": dec,
                 }
             },
             upsert=True,
