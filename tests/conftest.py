@@ -104,7 +104,7 @@ def milliquas(data_dir, mongo_client):
 
         # add healpix index
         srcdict["hpxid_16"] = int(
-            ang2pix(2 ** 16, srcdict["ra"], srcdict["dec"], lonlat=True, nest=True)
+            ang2pix(2**16, srcdict["ra"], srcdict["dec"], lonlat=True, nest=True)
         )
 
         return srcdict
