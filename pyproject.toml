@@ -23,6 +23,23 @@ pytest-cov = ">=2.11.1"
 [tool.poetry.extras]
 ingest = ["tqdm", "pandas"]
 
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.8.0"
+types-tqdm = "^4.66.0.20240106"
+geojson = "^3.1.0"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "healpy",
+    "astropy.*",
+    "pandas",
+    "geojson",
+]
+ignore_missing_imports = true
