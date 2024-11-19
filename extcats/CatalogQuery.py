@@ -721,7 +721,7 @@ class CatalogQuery:
         for pp in tqdm.tqdm(points):
             buff = qfunc(pp[0], pp[1], rs_arcsec, method, **qfunc_args)
             if (
-                (type(buff) == tuple and buff == (None, None))
+                (isinstance(buff, tuple) and buff == (None, None))
                 or (buff is None)
                 or (not buff)
             ):
