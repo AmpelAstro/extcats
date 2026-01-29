@@ -24,9 +24,9 @@ pytest-cov = ">=2.12.1"
 ingest = ["tqdm", "pandas"]
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.8.0"
+mypy = "^1.19.1"
 types-tqdm = "^4.66.0.20240106"
-geojson = "^3.1.0"
+geojson = "^3.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
